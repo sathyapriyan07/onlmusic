@@ -118,15 +118,20 @@ export default function AdminArtistsPage() {
     if (!q.trim()) return;
     setImporting(true);
     setErr(null);
+    setImportResults([]);
     try {
       const term = encodeURIComponent(q.trim());
-      const resp = await fetch(`https://itunes.apple.com/search?term=${term}&media=music&entity=artist&limit=25`);
+      const url = `https://itunes.apple.com/search?term=${term}&media=music&entity=musicArtist&limit=25`;
+      const resp = await fetch(url);
       const data = await resp.json();
-      const results: ItunesArtist[] = (data.results ?? []).map((r: Record<string, unknown>) => ({
-        artistId: r.artistId as number,
-        artistName: r.artistName as string,
-        artistLinkUrl: r.artistLinkUrl as string | null,
-      }));
+      const raw = data.resultCount > 0 ? data.results : [];
+      const results: ItunesArtist[] = raw
+        .filter((r: Record<string, unknown>) => r.artistId && r.artistName)
+        .map((r: Record<string, unknown>) => ({
+          artistId: r.artistId as number,
+          artistName: r.artistName as string,
+          artistLinkUrl: r.artistLinkUrl as string | null,
+        }));
       setImportResults(results);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Failed to search iTunes.");
@@ -265,7 +270,10 @@ export default function AdminArtistsPage() {
                   </button>
                 </div>
               ))}
-              {importResults.length === 0 && !importing && (
+              {importResults.length === 0 && !importing && importQuery && !err && (
+                <div className="text-center text-sm text-muted">No artists found for "{importQuery}".</div>
+              )}
+              {importResults.length === 0 && !importing && !importQuery && (
                 <div className="text-center text-sm text-muted">Search for an artist to import from iTunes.</div>
               )}
             </div>
