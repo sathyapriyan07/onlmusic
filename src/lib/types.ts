@@ -34,6 +34,7 @@ export type Song = {
   music_rights: string | null;
   cover_url: string | null;
   cover_file_path: string | null;
+  preview_url: string | null;
   created_at: string;
 };
 

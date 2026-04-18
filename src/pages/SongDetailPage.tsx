@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useParams } from "react-router-dom";
 import PlayerEmbed from "../components/PlayerEmbed";
+import AudioPreview from "../components/AudioPreview";
 import LinkButtons from "../components/LinkButtons";
 import { ErrorState } from "../components/States";
 import { getAlbum, getSong, getSongArtists, listLinks } from "../lib/db";
@@ -122,6 +123,13 @@ export default function SongDetailPage() {
             <div className="rounded-xl bg-panel p-5">
               <div className="mb-2 text-sm font-semibold text-white">YouTube</div>
               <PlayerEmbed url={youtube} />
+            </div>
+          ) : null}
+
+          {song.preview_url ? (
+            <div className="rounded-xl bg-panel p-5">
+              <div className="mb-2 text-sm font-semibold text-white">Preview</div>
+              <AudioPreview src={song.preview_url} />
             </div>
           ) : null}
 

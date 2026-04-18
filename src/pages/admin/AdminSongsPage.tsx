@@ -17,6 +17,7 @@ interface ItunesResult {
   releaseDate: string | null;
   trackTimeMillis: number | null;
   artworkUrl100: string | null;
+  previewUrl: string | null;
 }
 
 export default function AdminSongsPage() {
@@ -34,6 +35,7 @@ export default function AdminSongsPage() {
   const [rights, setRights] = useState("");
   const [coverUrl, setCoverUrl] = useState("");
   const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState("");
   const [credits, setCredits] = useState<Credit[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -70,6 +72,7 @@ export default function AdminSongsPage() {
     setRights("");
     setCoverUrl("");
     setCoverFile(null);
+    setPreviewUrl("");
     setCredits([]);
   }
 
@@ -91,6 +94,7 @@ export default function AdminSongsPage() {
     setRights(s.music_rights ?? "");
     setCoverUrl(s.cover_url ?? "");
     setCoverFile(null);
+    setPreviewUrl(s.preview_url ?? "");
     await loadSongArtists(s.id);
   }
 
@@ -116,6 +120,7 @@ export default function AdminSongsPage() {
         music_rights: rights.trim() || null,
         cover_url: coverUrl.trim() || null,
         cover_file_path: coverUrl.trim() ? null : filePath,
+        preview_url: previewUrl.trim() || null,
       };
       if (!payload.title) throw new Error("Title is required.");
 
@@ -184,6 +189,7 @@ export default function AdminSongsPage() {
         releaseDate: r.releaseDate as string | null,
         trackTimeMillis: r.trackTimeMillis as number | null,
         artworkUrl100: r.artworkUrl100 as string | null,
+        previewUrl: r.previewUrl as string | null,
       }));
       setImportResults(results);
     } catch (e) {
@@ -213,6 +219,9 @@ export default function AdminSongsPage() {
       }
       if (r.artworkUrl100) {
         setCoverUrl(r.artworkUrl100.replace("100x100", "600x600"));
+      }
+      if (r.previewUrl) {
+        setPreviewUrl(r.previewUrl);
       }
     }
     setImportModalOpen(false);
@@ -266,6 +275,7 @@ export default function AdminSongsPage() {
 
               <input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="Cover URL (optional)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500" />
               <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)} className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white file:mr-3 file:rounded-full file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:font-semibold file:text-black" />
+              <input value={previewUrl} onChange={(e) => setPreviewUrl(e.target.value)} placeholder="Preview URL (30-sec iTunes audio)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500" />
 
               <div className="rounded-lg border border-app bg-black/20 p-3">
                 <div className="flex items-center justify-between">

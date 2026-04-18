@@ -50,6 +50,7 @@ create table if not exists public.songs (
   music_rights text,
   cover_url text,
   cover_file_path text,
+  preview_url text,
   created_at timestamptz not null default now()
 );
 
