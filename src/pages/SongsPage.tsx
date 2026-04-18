@@ -33,14 +33,14 @@ export default function SongsPage() {
       } catch (e) {
         setErr(e instanceof Error ? e.message : "Failed to load songs.");
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
     run();
     return () => {
       mounted = false;
     };
-  });
+  }, []);
 
   return (
     <div>

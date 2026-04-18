@@ -3,7 +3,6 @@ import { Helmet } from "react-helmet-async";
 import { Link, useParams } from "react-router-dom";
 import LinkButtons from "../components/LinkButtons";
 import { ErrorState } from "../components/States";
-import MediaCard from "../components/MediaCard";
 import { getAlbum, getAlbumArtists, listAlbumSongs, listLinks } from "../lib/db";
 import type { Album, Link as LinkRow, Song } from "../lib/types";
 import { resolveImageSrc } from "../lib/images";
@@ -44,7 +43,7 @@ export default function AlbumDetailPage() {
       } catch (e) {
         setErr(e instanceof Error ? e.message : "Failed to load album.");
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
     run();
@@ -77,15 +76,15 @@ export default function AlbumDetailPage() {
 
       {/* Hero */}
       <div className="flex flex-col gap-5 pb-6 pt-4">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end">
-          <div className="aspect-square w-full shrink-0 overflow-hidden rounded-lg shadow-2xl sm:w-56">
+        <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-end">
+          <div className="aspect-square w-40 shrink-0 overflow-hidden rounded-lg shadow-2xl sm:w-56">
             <img src={cover} alt="" className="h-full w-full object-cover" />
           </div>
-          <div className="flex-1">
+          <div className="flex-1 text-center sm:text-left">
             <div className="text-xs font-medium uppercase tracking-wider text-white/70">Album</div>
             <h1 className="mt-1 text-3xl font-bold leading-tight text-white sm:text-5xl">{album.title}</h1>
             {artists.length > 0 && (
-              <div className="mt-2 flex flex-wrap items-center gap-x-2 text-sm text-white/70">
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-x-2 text-sm text-white/70 sm:justify-start">
                 {artists.map((a, i) => (
                   <Link key={a.id} to={`/artists/${a.id}`} className="hover:text-white hover:underline">
                     {a.name}
@@ -105,16 +104,34 @@ export default function AlbumDetailPage() {
       <section className="pb-8">
         <h2 className="mb-4 text-lg font-bold text-white">Tracklist</h2>
         {songs.length > 0 ? (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {songs.map((s) => (
-              <MediaCard
-                key={s.id}
-                to={`/songs/${s.id}`}
-                image={resolveImageSrc({ url: s.cover_url, filePath: s.cover_file_path, bucket: "song-covers" })}
-                title={s.title}
-                subtitle={s.duration ?? undefined}
-              />
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-white/10 text-xs uppercase text-white/50">
+                <tr>
+                  <th className="pb-2 font-medium">#</th>
+                  <th className="pb-2 font-medium">Title</th>
+                  <th className="pb-2 font-medium hidden sm:table-cell">Duration</th>
+                </tr>
+              </thead>
+              <tbody>
+                {songs.map((s, i) => (
+                  <tr key={s.id} className="border-b border-white/5 hover:bg-white/5">
+                    <td className="py-2 pr-4 text-white/50">{i + 1}</td>
+                    <td className="py-2">
+                      <Link to={`/songs/${s.id}`} className="flex items-center gap-3 group">
+                        <img
+                          src={resolveImageSrc({ url: s.cover_url, filePath: s.cover_file_path, bucket: "song-covers" })}
+                          alt=""
+                          className="h-10 w-10 rounded shrink-0"
+                        />
+                        <span className="font-medium text-white group-hover:text-[var(--accent)]">{s.title}</span>
+                      </Link>
+                    </td>
+                    <td className="py-2 text-white/50 hidden sm:table-cell">{s.duration || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : (
           <div className="text-white/50">No tracks yet.</div>

@@ -210,11 +210,13 @@ export default function AdminArtistsPage() {
                   <div key={a.id} className="flex items-center justify-between gap-3 rounded-lg border border-app bg-black/20 px-3 py-2">
                     <div className="flex min-w-0 items-center gap-3">
                       <div className="h-10 w-10 overflow-hidden rounded-full bg-black/20">
-                        <img
-                          src={resolveImageSrc({ url: a.image_url, filePath: a.image_file_path, bucket: BUCKET })}
-                          alt=""
-                          className="h-full w-full object-cover"
-                        />
+                        {a.image_url || a.image_file_path ? (
+                          <img
+                            src={resolveImageSrc({ url: a.image_url, filePath: a.image_file_path, bucket: BUCKET })}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        ) : null}
                       </div>
                       <div className="min-w-0">
                         <div className="truncate text-sm font-medium text-white">{a.name}</div>

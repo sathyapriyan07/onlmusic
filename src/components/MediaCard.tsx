@@ -10,7 +10,7 @@ export default function MediaCard({
   ratio = "square",
 }: {
   to: string;
-  image: string;
+  image?: string;
   title: string;
   subtitle?: string;
   variant?: "square" | "round";

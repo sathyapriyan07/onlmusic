@@ -133,10 +133,10 @@ export default function AdminLinksPage() {
             {loading ? (
               <div className="mt-3 text-sm text-muted">Loading…</div>
             ) : (
-              <div className="mt-3 max-h-[520px] space-y-2 overflow-auto pr-2">
+              <div className="mt-3 max-h-[520px] space-y-2 overflow-x-auto">
                 {links.map((l) => (
                   <div key={l.id} className="rounded-lg border border-app bg-black/20 p-3">
-                    <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center justify-between gap-3 min-w-0">
                       <div className="min-w-0">
                         <div className="text-xs text-muted">
                           {l.entity_type} · {l.platform}

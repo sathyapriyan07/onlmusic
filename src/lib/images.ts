@@ -10,9 +10,9 @@ export function resolveImageSrc(opts: {
   bucket: string;
   filePath?: string | null;
   fallback?: string;
-}): string {
+}): string | undefined {
   if (opts.url) return opts.url;
   if (opts.filePath) return getPublicImageUrl(opts.bucket, opts.filePath);
-  return opts.fallback ?? "";
+  return opts.fallback;
 }
 

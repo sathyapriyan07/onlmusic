@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import LinkButtons from "../components/LinkButtons";
 import MediaCard from "../components/MediaCard";
 import { ErrorState } from "../components/States";
@@ -100,20 +100,38 @@ export default function ArtistDetailPage() {
       {songs.length > 0 && (
         <section className="pb-8">
           <h2 className="mb-4 text-lg font-bold text-white">Songs</h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-            {songs.map((s) => (
-              <MediaCard
-                key={`${s.song.id}-${s.role}`}
-                to={`/songs/${s.song.id}`}
-                image={resolveImageSrc({
-                  url: s.song.cover_url,
-                  filePath: s.song.cover_file_path,
-                  bucket: "song-covers",
-                })}
-                title={s.song.title}
-                subtitle={s.role}
-              />
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-white/10 text-xs uppercase text-white/50">
+                <tr>
+                  <th className="pb-2 font-medium">#</th>
+                  <th className="pb-2 font-medium">Title</th>
+                  <th className="pb-2 font-medium hidden sm:table-cell">Role</th>
+                </tr>
+              </thead>
+              <tbody>
+                {songs.map((s, i) => (
+                  <tr key={`${s.song.id}-${s.role}`} className="border-b border-white/5 hover:bg-white/5">
+                    <td className="py-2 pr-4 text-white/50">{i + 1}</td>
+                    <td className="py-2">
+                      <Link to={`/songs/${s.song.id}`} className="flex items-center gap-3 group">
+                        <img
+                          src={resolveImageSrc({
+                            url: s.song.cover_url,
+                            filePath: s.song.cover_file_path,
+                            bucket: "song-covers",
+                          })}
+                          alt=""
+                          className="h-10 w-10 rounded shrink-0"
+                        />
+                        <span className="font-medium text-white group-hover:text-[var(--accent)]">{s.song.title}</span>
+                      </Link>
+                    </td>
+                    <td className="py-2 text-white/50 hidden sm:table-cell">{s.role}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </section>
       )}
