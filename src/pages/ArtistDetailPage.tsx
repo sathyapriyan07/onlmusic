@@ -62,80 +62,91 @@ export default function ArtistDetailPage() {
     });
   }, [artist]);
 
-  if (loading) return null;
-  if (err) return <ErrorState title="Could not load artist" message={err} />;
-  if (!artist) return <ErrorState title="Artist not found" />;
+  if (loading) return <div className="p-4">Loading...</div>;
+  if (err) return <ErrorState title="Error" message={err} />;
+  if (!artist) return <ErrorState title="Not found" />;
 
   return (
     <div>
       <Helmet>
-        <title>{artist.name} · ONL Music Discovery</title>
-        <meta name="description" content={artist.bio ? artist.bio.slice(0, 160) : `Artist page for ${artist.name}.`} />
+        <title>{artist.name} · ONL Music</title>
       </Helmet>
 
-      <div className="rounded-xl bg-panel p-6">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-          <div className="h-28 w-28 overflow-hidden rounded-full bg-black/30">
-            {image ? <img src={image} alt="" className="h-full w-full object-cover" /> : null}
+      {/* Background */}
+      <div className="fixed inset-0 -z-10">
+        {image && (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-b from-[#2a2a2a] via-[#121212]/90 to-[#121212]" />
+            <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-20 blur-[100px]" />
+          </>
+        )}
+      </div>
+
+      {/* Hero */}
+      <div className="flex flex-col gap-5 pb-6 pt-4">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end">
+          <div className="h-40 w-40 shrink-0 overflow-hidden rounded-full shadow-2xl sm:h-56 sm:w-56">
+            <img src={image} alt="" className="h-full w-full object-cover" />
           </div>
-          <div className="min-w-0">
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted">Artist</div>
-            <h1 className="mt-2 truncate text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-              {artist.name}
-            </h1>
-            {artist.bio ? <p className="mt-3 max-w-3xl text-sm text-muted">{artist.bio}</p> : null}
-            <div className="mt-4">{links.length ? <LinkButtons links={links} /> : null}</div>
+          <div className="flex-1">
+            <div className="text-xs font-medium uppercase tracking-wider text-white/70">Artist</div>
+            <h1 className="mt-1 text-3xl font-bold leading-tight text-white sm:text-5xl">{artist.name}</h1>
+            {artist.bio && <p className="mt-3 max-w-xl text-sm text-white/60">{artist.bio}</p>}
           </div>
         </div>
       </div>
 
-      <div className="mt-8 space-y-8">
-        <section className="rounded-xl bg-panel p-6">
-          <h2 className="text-sm font-semibold text-white">Songs</h2>
-          {songs.length ? (
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              {songs.map((s) => (
-                <MediaCard
-                  key={`${s.song.id}-${s.role}`}
-                  to={`/songs/${s.song.id}`}
-                  image={resolveImageSrc({
-                    url: s.song.cover_url,
-                    filePath: s.song.cover_file_path,
-                    bucket: "song-covers",
-                  })}
-                  title={s.song.title}
-                  subtitle={s.role}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="mt-3 text-sm text-muted">No songs yet.</div>
-          )}
+      {/* Songs */}
+      {songs.length > 0 && (
+        <section className="pb-8">
+          <h2 className="mb-4 text-lg font-bold text-white">Songs</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            {songs.map((s) => (
+              <MediaCard
+                key={`${s.song.id}-${s.role}`}
+                to={`/songs/${s.song.id}`}
+                image={resolveImageSrc({
+                  url: s.song.cover_url,
+                  filePath: s.song.cover_file_path,
+                  bucket: "song-covers",
+                })}
+                title={s.song.title}
+                subtitle={s.role}
+              />
+            ))}
+          </div>
         </section>
+      )}
 
-        <section className="rounded-xl bg-panel p-6">
-          <h2 className="text-sm font-semibold text-white">Albums</h2>
-          {albums.length ? (
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              {albums.map((a) => (
-                <MediaCard
-                  key={a.id}
-                  to={`/albums/${a.id}`}
-                  image={resolveImageSrc({
-                    url: a.cover_url,
-                    filePath: a.cover_file_path,
-                    bucket: "album-covers",
-                  })}
-                  title={a.title}
-                  subtitle={a.release_year ? String(a.release_year) : undefined}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="mt-3 text-sm text-muted">No albums yet.</div>
-          )}
+      {/* Albums */}
+      {albums.length > 0 && (
+        <section className="pb-8">
+          <h2 className="mb-4 text-lg font-bold text-white">Albums</h2>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+            {albums.map((a) => (
+              <MediaCard
+                key={a.id}
+                to={`/albums/${a.id}`}
+                image={resolveImageSrc({
+                  url: a.cover_url,
+                  filePath: a.cover_file_path,
+                  bucket: "album-covers",
+                })}
+                title={a.title}
+                subtitle={a.release_year ? String(a.release_year) : undefined}
+              />
+            ))}
+          </div>
         </section>
-      </div>
+      )}
+
+      {/* Links */}
+      {links.length > 0 && (
+        <section className="pb-8">
+          <h2 className="mb-4 text-lg font-bold text-white">Links</h2>
+          <LinkButtons links={links} />
+        </section>
+      )}
     </div>
   );
 }

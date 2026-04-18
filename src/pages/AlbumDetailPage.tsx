@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useParams } from "react-router-dom";
 import LinkButtons from "../components/LinkButtons";
@@ -53,84 +53,81 @@ export default function AlbumDetailPage() {
     };
   }, [albumId]);
 
-  const artistsText = useMemo(() => artists.map((a) => a.name).join(", "), [artists]);
+  if (loading) return <div className="p-4">Loading...</div>;
+  if (err) return <ErrorState title="Error" message={err} />;
+  if (!album) return <ErrorState title="Not found" />;
 
-  if (loading) return null;
-  if (err) return <ErrorState title="Could not load album" message={err} />;
-  if (!album) return <ErrorState title="Album not found" />;
-
-  const cover = resolveImageSrc({
-    url: album.cover_url,
-    filePath: album.cover_file_path,
-    bucket: "album-covers",
-  });
+  const cover = resolveImageSrc({ url: album.cover_url, filePath: album.cover_file_path, bucket: "album-covers" });
 
   return (
     <div>
       <Helmet>
-        <title>{album.title} · ONL Music Discovery</title>
-        <meta name="description" content={`Album details for ${album.title}${artistsText ? ` by ${artistsText}` : ""}.`} />
+        <title>{album.title} · ONL Music</title>
       </Helmet>
 
-      <div className="rounded-xl bg-panel p-6">
-        <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
-          <div className="aspect-square overflow-hidden rounded-lg bg-black/30">
-            {cover ? <img src={cover} alt="" className="h-full w-full object-cover" /> : null}
-          </div>
+      {/* Background */}
+      <div className="fixed inset-0 -z-10">
+        {cover && (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-b from-[#2a2a2a] via-[#121212]/90 to-[#121212]" />
+            <img src={cover} alt="" className="absolute inset-0 h-full w-full object-cover opacity-20 blur-[100px]" />
+          </>
+        )}
+      </div>
 
-          <div className="min-w-0">
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted">Album</div>
-            <h1 className="mt-2 truncate text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-              {album.title}
-            </h1>
-            <div className="mt-2 text-sm text-muted">
-              {artists.length ? (
-                <span>
-                  {artists.map((a, i) => (
-                    <span key={a.id}>
-                      <Link to={`/artists/${a.id}`} className="hover:text-white">
-                        {a.name}
-                      </Link>
-                      {i < artists.length - 1 ? ", " : ""}
-                    </span>
-                  ))}
-                </span>
-              ) : null}
-              {album.release_year ? <span>{artists.length ? " · " : ""}{album.release_year}</span> : null}
-            </div>
+      {/* Hero */}
+      <div className="flex flex-col gap-5 pb-6 pt-4">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-end">
+          <div className="aspect-square w-full shrink-0 overflow-hidden rounded-lg shadow-2xl sm:w-56">
+            <img src={cover} alt="" className="h-full w-full object-cover" />
+          </div>
+          <div className="flex-1">
+            <div className="text-xs font-medium uppercase tracking-wider text-white/70">Album</div>
+            <h1 className="mt-1 text-3xl font-bold leading-tight text-white sm:text-5xl">{album.title}</h1>
+            {artists.length > 0 && (
+              <div className="mt-2 flex flex-wrap items-center gap-x-2 text-sm text-white/70">
+                {artists.map((a, i) => (
+                  <Link key={a.id} to={`/artists/${a.id}`} className="hover:text-white hover:underline">
+                    {a.name}
+                    {i < artists.length - 1 ? ", " : ""}
+                  </Link>
+                ))}
+              </div>
+            )}
+            {album.release_year && (
+              <div className="mt-2 text-xs text-white/50">{album.release_year} · {songs.length} songs</div>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_360px]">
-        <div className="rounded-xl bg-panel p-5">
-          <div className="text-sm font-semibold text-white">Tracklist</div>
-          {songs.length ? (
-            <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {songs.map((s) => (
-                <MediaCard
-                  key={s.id}
-                  to={`/songs/${s.id}`}
-                  image={resolveImageSrc({
-                    url: s.cover_url,
-                    filePath: s.cover_file_path,
-                    bucket: "song-covers",
-                  })}
-                  title={s.title}
-                  subtitle={[s.duration ?? "", s.year ? String(s.year) : ""].filter(Boolean).join(" · ")}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="mt-3 text-sm text-muted">No songs yet.</div>
-          )}
-        </div>
+      {/* Tracklist */}
+      <section className="pb-8">
+        <h2 className="mb-4 text-lg font-bold text-white">Tracklist</h2>
+        {songs.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {songs.map((s) => (
+              <MediaCard
+                key={s.id}
+                to={`/songs/${s.id}`}
+                image={resolveImageSrc({ url: s.cover_url, filePath: s.cover_file_path, bucket: "song-covers" })}
+                title={s.title}
+                subtitle={s.duration ?? undefined}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="text-white/50">No tracks yet.</div>
+        )}
+      </section>
 
-        <div className="rounded-xl bg-panel p-5">
-          <div className="text-sm font-semibold text-white">External links</div>
-          <div className="mt-3">{links.length ? <LinkButtons links={links} /> : <div className="text-sm text-muted">No links yet.</div>}</div>
-        </div>
-      </div>
+      {/* Links */}
+      {links.length > 0 && (
+        <section className="pb-8">
+          <h2 className="mb-4 text-lg font-bold text-white">Links</h2>
+          <LinkButtons links={links} />
+        </section>
+      )}
     </div>
   );
 }

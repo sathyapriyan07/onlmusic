@@ -4,7 +4,6 @@ import { Link, useParams } from "react-router-dom";
 import PlayerEmbed from "../components/PlayerEmbed";
 import AudioPreview from "../components/AudioPreview";
 import LinkButtons from "../components/LinkButtons";
-import MediaCard from "../components/MediaCard";
 import { ErrorState } from "../components/States";
 import { getAlbum, getSong, getSongArtists, listLinks, listSongs } from "../lib/db";
 import type { Album, Link as LinkRow, Song } from "../lib/types";
@@ -47,13 +46,11 @@ export default function SongDetailPage() {
         setLinks(songLinks);
         setAlbum(albumRow);
 
-        // More from album
         if (s.album_id) {
           const allSongs = await listSongs();
-          setAlbumSongs(allSongs.filter((sg) => sg.album_id === s.album_id && sg.id !== s.id && sg.published).slice(0, 5));
+          setAlbumSongs(allSongs.filter((sg) => sg.album_id === s.album_id && sg.id !== s.id && sg.published).slice(0, 10));
         }
 
-        // More from first artist
         if (songArtists.length > 0) {
           const artistId = songArtists[0].artist.id;
           const allSongs = await listSongs();
@@ -67,7 +64,7 @@ export default function SongDetailPage() {
             withArtists
               .filter((x) => x.artistIds.includes(artistId) && x.song.id !== s.id && x.song.published)
               .map((x) => x.song)
-              .slice(0, 5)
+              .slice(0, 6)
           );
         }
       } catch (e) {
@@ -84,152 +81,156 @@ export default function SongDetailPage() {
 
   const youtube = useMemo(() => links.find((l) => l.platform.toLowerCase().includes("youtube"))?.url, [links]);
 
-  if (loading) return null;
-  if (err) return <ErrorState title="Could not load song" message={err} />;
-  if (!song) return <ErrorState title="Song not found" />;
+  if (loading) return <div className="p-4">Loading...</div>;
+  if (err) return <ErrorState title="Error" message={err} />;
+  if (!song) return <ErrorState title="Not found" />;
 
-  const cover = resolveImageSrc({
-    url: song.cover_url,
-    filePath: song.cover_file_path,
-    bucket: "song-covers",
-  });
-
-  const albumCover = album
-    ? resolveImageSrc({ url: album.cover_url, filePath: album.cover_file_path, bucket: "album-covers" })
-    : cover;
-
-  const artistsText = artists.map((a) => a.name).join(", ");
+  const cover = resolveImageSrc({ url: song.cover_url, filePath: song.cover_file_path, bucket: "song-covers" });
+  const albumCover = album ? resolveImageSrc({ url: album.cover_url, filePath: album.cover_file_path, bucket: "album-covers" }) : cover;
 
   return (
     <div>
       <Helmet>
-        <title>{song.title} · ONL Music Discovery</title>
-        <meta name="description" content={`${song.title}${artistsText ? ` by ${artistsText}` : ""}.`} />
+        <title>{song.title} · ONL Music</title>
       </Helmet>
 
-      {/* Background blur */}
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+      {/* Background */}
+      <div className="fixed inset-0 -z-10">
         {albumCover && (
           <>
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[var(--bg)]" />
-            <img
-              src={albumCover}
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover opacity-20 blur-[80px]"
-            />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#2a2a2a] via-[#121212]/90 to-[#121212]" />
+            <img src={albumCover} alt="" className="absolute inset-0 h-full w-full object-cover opacity-20 blur-[100px]" />
           </>
         )}
       </div>
 
-      {/* Hero */}
-      <div className="flex flex-col gap-6 pb-8 pt-20 sm:pt-24">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end">
-          <div className="aspect-square w-full shrink-0 overflow-hidden rounded-xl shadow-card sm:w-64">
+      {/* Hero - Mobile: centered, smaller cover */}
+      <div className="flex flex-col gap-6 pb-8 pt-4">
+        <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-end">
+          <div className="aspect-square w-48 shrink-0 overflow-hidden rounded-lg shadow-2xl sm:w-56">
             <img src={cover} alt="" className="h-full w-full object-cover" />
           </div>
-
-          <div className="flex-1">
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted">Song</div>
-            <h1 className="mt-1 truncate text-4xl font-bold tracking-tight text-white sm:text-5xl">
-              {song.title}
-            </h1>
+          <div className="flex-1 text-center sm:text-left">
+            <div className="text-xs font-medium uppercase tracking-wider text-white/70">Song</div>
+            <h1 className="mt-1 text-3xl font-bold leading-tight text-white sm:text-5xl sm:text-left">{song.title}</h1>
             {artists.length > 0 && (
-              <div className="mt-2 flex flex-wrap items-center gap-x-2 text-base text-muted">
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-x-2 text-sm text-white/70 sm:justify-start">
                 {artists.map((a, i) => (
-                  <Link key={a.id} to={`/artists/${a.id}`} className="hover:text-white">
+                  <Link key={a.id} to={`/artists/${a.id}`} className="hover:text-white hover:underline">
                     {a.name}
                     {i < artists.length - 1 ? ", " : ""}
                   </Link>
                 ))}
               </div>
             )}
-
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted">
-              {song.year && <span className="rounded-full bg-white/10 px-3 py-1">{song.year}</span>}
-              {song.duration && <span className="rounded-full bg-white/10 px-3 py-1">{song.duration}</span>}
-              {album && (
-                <Link to={`/albums/${album.id}`} className="rounded-full bg-white/10 px-3 py-1 hover:bg-white/20">
-                  {album.title}
-                </Link>
-              )}
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs text-white/50 sm:justify-start">
+              {song.year && <span>{song.year}</span>}
+              {song.year && song.duration && <span>·</span>}
+              {song.duration && <span>{song.duration}</span>}
+              {album && <span>· {album.title}</span>}
             </div>
           </div>
         </div>
-
         {youtube && <PlayerEmbed url={youtube} />}
-        {song.preview_url && <div className="max-w-md"><AudioPreview src={song.preview_url} /></div>}
+        {song.preview_url && <div className="max-w-md mx-auto sm:mx-0"><AudioPreview src={song.preview_url} /></div>}
       </div>
 
-      {/* Content */}
-      <div className="grid gap-6 pb-12 lg:grid-cols-[1fr_340px]">
-        <div className="space-y-8">
-          {/* Credits */}
-          {artists.length > 0 && (
-            <div className="rounded-xl border border-white/10 bg-black/40 p-5">
-              <div className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted">Credits</div>
-              <div className="space-y-4">
-                {artists.map((a) => (
-                  <div key={`${a.id}-${a.role}`} className="flex items-center justify-between border-b border-white/5 pb-3 last:border-0">
-                    <div>
-                      <div className="text-xs text-[var(--accent)]">{a.role}</div>
-                      <Link to={`/artists/${a.id}`} className="mt-0.5 block text-base font-medium text-white hover:text-white/90">
-                        {a.name}
-                      </Link>
-                    </div>
+      {/* Sections */}
+      <div className="space-y-8 pb-8">
+        {/* Credits */}
+        {artists.length > 0 && (
+          <section>
+            <h2 className="mb-4 text-lg font-bold text-white">Credits</h2>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {artists.map((a) => (
+                <Link
+                  key={`${a.id}-${a.role}`}
+                  to={`/artists/${a.id}`}
+                  className="flex items-center gap-3 rounded-md bg-white/5 p-3 transition hover:bg-white/10"
+                >
+                  <div className="flex-1">
+                    <div className="text-xs text-[var(--accent)]">{a.role}</div>
+                    <div className="font-medium text-white">{a.name}</div>
                   </div>
-                ))}
-              </div>
+                </Link>
+              ))}
             </div>
-          )}
+          </section>
+        )}
 
-          {/* More from album */}
-          {albumSongs.length > 0 && (
-            <div className="rounded-xl border border-white/10 bg-black/40 p-5">
-              <div className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted">
-                More from {album?.title}
-              </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {albumSongs.map((s) => (
-                  <MediaCard
-                    key={s.id}
-                    to={`/songs/${s.id}`}
-                    image={resolveImageSrc({ url: s.cover_url, filePath: s.cover_file_path, bucket: "song-covers" })}
-                    title={s.title}
-                    subtitle={s.duration ?? undefined}
-                  />
-                ))}
-              </div>
+        {/* More from album - Table like Spotify */}
+        {albumSongs.length > 0 && (
+          <section>
+            <Link to={album ? `/albums/${album.id}` : "#"} className="mb-4 block text-lg font-bold text-white hover:underline">
+              More from {album?.title}
+            </Link>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="border-b border-white/10 text-xs uppercase text-white/50">
+                  <tr>
+                    <th className="pb-2 font-medium">#</th>
+                    <th className="pb-2 font-medium">Title</th>
+                    <th className="pb-2 font-medium hidden sm:table-cell">Duration</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {albumSongs.map((s, i) => (
+                    <tr key={s.id} className="border-b border-white/5 hover:bg-white/5">
+                      <td className="py-2 pr-4 text-white/50">{i + 1}</td>
+                      <td className="py-2">
+                        <Link to={`/songs/${s.id}`} className="flex items-center gap-3 group">
+                          <img
+                            src={resolveImageSrc({ url: s.cover_url, filePath: s.cover_file_path, bucket: "song-covers" })}
+                            alt=""
+                            className="h-10 w-10 rounded shrink-0"
+                          />
+                          <span className="font-medium text-white group-hover:text-[var(--accent)]">{s.title}</span>
+                        </Link>
+                      </td>
+                      <td className="py-2 text-white/50 hidden sm:table-cell">{s.duration || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
+          </section>
+        )}
 
-          {/* More from artist */}
-          {artistSongs.length > 0 && (
-            <div className="rounded-xl border border-white/10 bg-black/40 p-5">
-              <div className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted">
-                More from {artists[0]?.name}
-              </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {artistSongs.map((s) => (
-                  <MediaCard
-                    key={s.id}
-                    to={`/songs/${s.id}`}
-                    image={resolveImageSrc({ url: s.cover_url, filePath: s.cover_file_path, bucket: "song-covers" })}
-                    title={s.title}
-                    subtitle={s.duration ?? undefined}
-                  />
-                ))}
-              </div>
+        {/* More from artist */}
+        {artistSongs.length > 0 && (
+          <section>
+            <h2 className="mb-4 text-lg font-bold text-white">More by {artists[0]?.name}</h2>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+              {artistSongs.map((s) => (
+                <Link
+                  key={s.id}
+                  to={`/songs/${s.id}`}
+                  className="group rounded-lg bg-transparent p-2 transition hover:bg-white/5"
+                >
+                  <div className="aspect-square overflow-hidden rounded-lg bg-black/40">
+                    <img
+                      src={resolveImageSrc({ url: s.cover_url, filePath: s.cover_file_path, bucket: "song-covers" })}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="mt-2">
+                    <div className="line-clamp-1 text-sm font-medium text-white group-hover:text-[var(--accent)]">{s.title}</div>
+                    {s.duration && <div className="text-xs text-white/50">{s.duration}</div>}
+                  </div>
+                </Link>
+              ))}
             </div>
-          )}
-        </div>
+          </section>
+        )}
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          <div className="rounded-xl border border-white/10 bg-black/40 p-5">
-            <div className="text-xs font-semibold uppercase tracking-wider text-muted">Links</div>
-            <div className="mt-3">{links.length ? <LinkButtons links={links} /> : <div className="text-sm text-muted">No links.</div>}</div>
-          </div>
-        </div>
+        {/* Links */}
+        {links.length > 0 && (
+          <section>
+            <h2 className="mb-4 text-lg font-bold text-white">Links</h2>
+            <LinkButtons links={links} />
+          </section>
+        )}
       </div>
     </div>
   );

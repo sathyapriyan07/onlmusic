@@ -19,17 +19,17 @@ export default function MediaCard({
   return (
     <Link
       to={to}
-      className="group block rounded-xl bg-panel p-3 transition hover:bg-panel2"
+      className="group block rounded-lg bg-transparent p-2 transition hover:bg-white/5"
     >
       <div
         className={clsx(
-          "relative overflow-hidden bg-black/30",
+          "relative overflow-hidden bg-black/40",
           variant === "round"
             ? "aspect-square rounded-full"
             : ratio === "poster"
-              ? "aspect-[3/4] rounded-2xl"
+              ? "aspect-[3/4] rounded-xl"
               : ratio === "video"
-                ? "aspect-video rounded-2xl"
+                ? "aspect-video rounded-xl"
                 : "aspect-square rounded-lg",
         )}
       >
@@ -45,9 +45,9 @@ export default function MediaCard({
         )}
       </div>
 
-      <div className="mt-3">
-        <div className="line-clamp-1 text-sm font-semibold text-white">{title}</div>
-        {subtitle ? <div className="line-clamp-1 text-xs text-muted">{subtitle}</div> : null}
+      <div className="mt-2 px-1">
+        <div className="line-clamp-1 text-sm font-medium text-white">{title}</div>
+        {subtitle ? <div className="line-clamp-1 text-xs text-white/50">{subtitle}</div> : null}
       </div>
     </Link>
   );
