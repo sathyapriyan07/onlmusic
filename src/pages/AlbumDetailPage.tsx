@@ -106,7 +106,7 @@ export default function AlbumDetailPage() {
         <div className="rounded-xl bg-panel p-5">
           <div className="text-sm font-semibold text-white">Tracklist</div>
           {songs.length ? (
-            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {songs.map((s) => (
                 <MediaCard
                   key={s.id}
