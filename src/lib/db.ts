@@ -185,3 +185,55 @@ export async function listArtistAlbums(artistId: string) {
     album: Album;
   }>;
 }
+
+type SearchResult = {
+  type: "song" | "album" | "artist";
+  id: string;
+  title: string;
+  subtitle?: string;
+  image?: string;
+};
+
+export async function searchAll(q: string): Promise<SearchResult[]> {
+  if (!q.trim() || q.length < 2) return [];
+  const term = q.toLowerCase();
+  const [songs, albums, artists] = await Promise.all([
+    listSongs(),
+    listAlbums(),
+    listArtists(),
+  ]);
+  const results: SearchResult[] = [];
+  for (const s of songs) {
+    if (s.title.toLowerCase().includes(term)) {
+      results.push({
+        type: "song",
+        id: s.id,
+        title: s.title,
+        subtitle: s.year ? String(s.year) : undefined,
+        image: s.cover_url ?? undefined,
+      });
+    }
+  }
+  for (const a of albums) {
+    if (a.title.toLowerCase().includes(term)) {
+      results.push({
+        type: "album",
+        id: a.id,
+        title: a.title,
+        subtitle: a.release_year ? String(a.release_year) : undefined,
+        image: a.cover_url ?? undefined,
+      });
+    }
+  }
+  for (const ar of artists) {
+    if (ar.name.toLowerCase().includes(term)) {
+      results.push({
+        type: "artist",
+        id: ar.id,
+        title: ar.name,
+        image: ar.image_url ?? undefined,
+      });
+    }
+  }
+  return results.slice(0, 10);
+}

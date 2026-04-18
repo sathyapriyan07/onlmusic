@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Album, Home, LogIn, LogOut, Music2, Shield, Users } from "lucide-react";
 import clsx from "clsx";
 import { useAuth } from "../state/AuthProvider";
+import UnifiedSearch from "./UnifiedSearch";
 
 function NavItem({
   to,
@@ -158,27 +159,30 @@ export default function AppShell({ children }: { children: ReactNode }) {
               </div>
             </div>
 
-            <div className="mx-auto flex max-w-[1400px] items-center gap-2 px-4 pb-4 sm:px-5 lg:hidden">
-              {[
-                { to: "/", label: "Home", end: true },
-                { to: "/songs", label: "Songs" },
-                { to: "/albums", label: "Albums" },
-                { to: "/artists", label: "Artists" },
-              ].map((i) => (
-                <NavLink
-                  key={i.to}
-                  to={i.to}
-                  end={i.end}
-                  className={({ isActive }) =>
-                    clsx(
-                      "rounded-full px-3 py-2 text-sm transition",
-                      isActive ? "bg-white text-black" : "bg-panel text-white hover:bg-panel2",
-                    )
-                  }
-                >
-                  {i.label}
-                </NavLink>
-              ))}
+            <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-4 pb-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
+              <UnifiedSearch />
+              <div className="flex items-center gap-2">
+                {[
+                  { to: "/", label: "Home", end: true },
+                  { to: "/songs", label: "Songs" },
+                  { to: "/albums", label: "Albums" },
+                  { to: "/artists", label: "Artists" },
+                ].map((i) => (
+                  <NavLink
+                    key={i.to}
+                    to={i.to}
+                    end={i.end}
+                    className={({ isActive }) =>
+                      clsx(
+                        "rounded-full px-3 py-2 text-sm transition",
+                        isActive ? "bg-white text-black" : "bg-panel text-white hover:bg-panel2",
+                      )
+                    }
+                  >
+                    {i.label}
+                  </NavLink>
+                ))}
+              </div>
             </div>
           </header>
 
