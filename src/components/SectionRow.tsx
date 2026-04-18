@@ -1,5 +1,3 @@
-import { ChevronRight } from "lucide-react";
-
 export default function SectionRow({
   title,
   children,
@@ -10,17 +8,14 @@ export default function SectionRow({
   action?: React.ReactNode;
 }) {
   return (
-    <section className="mt-10">
+    <section className="mt-8">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight text-white">
-          {title}
-          <ChevronRight className="h-4 w-4 text-muted" />
-        </h2>
+        <h2 className="text-base font-semibold tracking-tight text-white">{title}</h2>
         {action}
       </div>
 
       <div className="-mx-4 overflow-x-auto px-4 pb-3 sm:-mx-5 sm:px-5">
-        <div className="flex snap-x snap-mandatory gap-4">{children}</div>
+        <div className="flex gap-4">{children}</div>
       </div>
     </section>
   );

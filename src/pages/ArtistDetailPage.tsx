@@ -73,32 +73,24 @@ export default function ArtistDetailPage() {
         <meta name="description" content={artist.bio ? artist.bio.slice(0, 160) : `Artist page for ${artist.name}.`} />
       </Helmet>
 
-      <div className="relative overflow-hidden rounded-[32px] border border-app bg-white/5 p-6 shadow-card sm:p-7">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_10%,rgba(191,90,242,0.18),rgba(191,90,242,0)_55%),radial-gradient(circle_at_80%_10%,rgba(255,55,95,0.12),rgba(255,55,95,0)_55%)]" />
-          {image ? (
-            <img
-              src={image}
-              alt=""
-              className="absolute right-0 top-0 hidden h-full w-1/2 object-cover opacity-25 blur-2xl lg:block"
-            />
-          ) : null}
-        </div>
-
-        <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center">
-          <div className="h-28 w-28 overflow-hidden rounded-full border border-app bg-black/20 ring-1 ring-white/10">
+      <div className="rounded-xl bg-panel p-6">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+          <div className="h-28 w-28 overflow-hidden rounded-full bg-black/30">
             {image ? <img src={image} alt="" className="h-full w-full object-cover" /> : null}
           </div>
           <div className="min-w-0">
-            <h1 className="text-2xl font-semibold tracking-tight text-white">{artist.name}</h1>
-            {artist.bio ? <p className="mt-2 max-w-3xl text-sm text-muted">{artist.bio}</p> : null}
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted">Artist</div>
+            <h1 className="mt-2 truncate text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+              {artist.name}
+            </h1>
+            {artist.bio ? <p className="mt-3 max-w-3xl text-sm text-muted">{artist.bio}</p> : null}
             <div className="mt-4">{links.length ? <LinkButtons links={links} /> : null}</div>
           </div>
         </div>
       </div>
 
       <div className="mt-8 space-y-8">
-        <section className="rounded-3xl border border-app bg-white/5 p-6 shadow-card">
+        <section className="rounded-xl bg-panel p-6">
           <h2 className="text-sm font-semibold text-white">Songs</h2>
           {songs.length ? (
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -121,7 +113,7 @@ export default function ArtistDetailPage() {
           )}
         </section>
 
-        <section className="rounded-3xl border border-app bg-white/5 p-6 shadow-card">
+        <section className="rounded-xl bg-panel p-6">
           <h2 className="text-sm font-semibold text-white">Albums</h2>
           {albums.length ? (
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">

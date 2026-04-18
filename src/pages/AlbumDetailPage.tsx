@@ -72,28 +72,20 @@ export default function AlbumDetailPage() {
         <meta name="description" content={`Album details for ${album.title}${artistsText ? ` by ${artistsText}` : ""}.`} />
       </Helmet>
 
-      <div className="relative overflow-hidden rounded-[32px] border border-app bg-white/5 shadow-card">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(10,132,255,0.18),rgba(10,132,255,0)_55%),radial-gradient(circle_at_80%_10%,rgba(255,55,95,0.14),rgba(255,55,95,0)_55%)]" />
-          {cover ? (
-            <img
-              src={cover}
-              alt=""
-              className="absolute right-0 top-0 hidden h-full w-1/2 object-cover opacity-25 blur-2xl lg:block"
-            />
-          ) : null}
-        </div>
+      <div className="rounded-xl bg-panel p-6">
+        <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
+          <div className="aspect-square overflow-hidden rounded-lg bg-black/30">
+            {cover ? <img src={cover} alt="" className="h-full w-full object-cover" /> : null}
+          </div>
 
-        <div className="relative grid gap-6 p-6 lg:grid-cols-[260px_1fr] lg:p-8">
-          <div className="rounded-3xl border border-app bg-black/20 p-3 backdrop-blur">
-            <div className="aspect-square overflow-hidden rounded-2xl bg-black/30 ring-1 ring-white/10">
-              {cover ? <img src={cover} alt="" className="h-full w-full object-cover" /> : null}
-            </div>
-            <div className="mt-4">
-              <h1 className="text-2xl font-semibold tracking-tight text-white">{album.title}</h1>
-              {album.release_year ? <div className="mt-2 text-sm text-muted">{album.release_year}</div> : null}
+          <div className="min-w-0">
+            <div className="text-xs font-semibold uppercase tracking-wider text-muted">Album</div>
+            <h1 className="mt-2 truncate text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+              {album.title}
+            </h1>
+            <div className="mt-2 text-sm text-muted">
               {artists.length ? (
-                <div className="mt-2 text-sm text-muted">
+                <span>
                   {artists.map((a, i) => (
                     <span key={a.id}>
                       <Link to={`/artists/${a.id}`} className="hover:text-white">
@@ -102,42 +94,41 @@ export default function AlbumDetailPage() {
                       {i < artists.length - 1 ? ", " : ""}
                     </span>
                   ))}
-                </div>
+                </span>
               ) : null}
+              {album.release_year ? <span>{artists.length ? " · " : ""}{album.release_year}</span> : null}
             </div>
           </div>
+        </div>
+      </div>
 
-          <div className="space-y-4">
-            <div className="rounded-3xl border border-app bg-white/5 p-6 shadow-card">
-              <h2 className="text-sm font-semibold text-white">External links</h2>
-              <div className="mt-3">
-                {links.length ? <LinkButtons links={links} /> : <div className="text-sm text-muted">No links yet.</div>}
-              </div>
+      <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_360px]">
+        <div className="rounded-xl bg-panel p-5">
+          <div className="text-sm font-semibold text-white">Tracklist</div>
+          {songs.length ? (
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {songs.map((s) => (
+                <MediaCard
+                  key={s.id}
+                  to={`/songs/${s.id}`}
+                  image={resolveImageSrc({
+                    url: s.cover_url,
+                    filePath: s.cover_file_path,
+                    bucket: "song-covers",
+                  })}
+                  title={s.title}
+                  subtitle={[s.duration ?? "", s.year ? String(s.year) : ""].filter(Boolean).join(" · ")}
+                />
+              ))}
             </div>
+          ) : (
+            <div className="mt-3 text-sm text-muted">No songs yet.</div>
+          )}
+        </div>
 
-            <div className="rounded-3xl border border-app bg-white/5 p-6 shadow-card">
-              <h2 className="text-sm font-semibold text-white">Tracklist</h2>
-              {songs.length ? (
-                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                  {songs.map((s) => (
-                    <MediaCard
-                      key={s.id}
-                      to={`/songs/${s.id}`}
-                      image={resolveImageSrc({
-                        url: s.cover_url,
-                        filePath: s.cover_file_path,
-                        bucket: "song-covers",
-                      })}
-                      title={s.title}
-                      subtitle={[s.duration ?? "", s.year ? String(s.year) : ""].filter(Boolean).join(" · ")}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="mt-3 text-sm text-muted">No songs yet.</div>
-              )}
-            </div>
-          </div>
+        <div className="rounded-xl bg-panel p-5">
+          <div className="text-sm font-semibold text-white">External links</div>
+          <div className="mt-3">{links.length ? <LinkButtons links={links} /> : <div className="text-sm text-muted">No links yet.</div>}</div>
         </div>
       </div>
     </div>

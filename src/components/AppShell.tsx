@@ -21,15 +21,21 @@ function NavItem({
       end={end}
       className={({ isActive }) =>
         clsx(
-          "group flex items-center gap-3 rounded-2xl px-3 py-2 text-sm transition",
-          isActive ? "bg-white/10 text-white" : "text-zinc-300 hover:bg-white/5 hover:text-white",
+          "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition",
+          isActive ? "bg-panel2 text-white" : "text-zinc-300 hover:bg-panel2 hover:text-white",
         )
       }
     >
-      <span className="grid h-9 w-9 place-items-center rounded-xl bg-white/5 text-zinc-200 transition group-hover:bg-white/10">
-        {icon}
-      </span>
-      <span className="font-medium">{label}</span>
+      {({ isActive }) => (
+        <>
+          <span className="grid h-9 w-9 place-items-center rounded-lg bg-black/30 transition group-hover:bg-black/40">
+            <span className={clsx("transition", isActive ? "text-[color:var(--accent)]" : "text-zinc-200")}>
+              {icon}
+            </span>
+          </span>
+          <span className="font-medium">{label}</span>
+        </>
+      )}
     </NavLink>
   );
 }
@@ -51,47 +57,88 @@ export default function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-app">
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute left-[-20%] top-[-10%] h-[380px] w-[380px] rounded-full bg-[radial-gradient(circle_at_center,rgba(255,55,95,0.35),rgba(255,55,95,0)_60%)] blur-2xl" />
-        <div className="absolute right-[-10%] top-[15%] h-[420px] w-[420px] rounded-full bg-[radial-gradient(circle_at_center,rgba(10,132,255,0.22),rgba(10,132,255,0)_60%)] blur-2xl" />
-        <div className="absolute bottom-[-20%] left-[20%] h-[480px] w-[480px] rounded-full bg-[radial-gradient(circle_at_center,rgba(191,90,242,0.18),rgba(191,90,242,0)_60%)] blur-2xl" />
-      </div>
+      <div className="mx-auto grid max-w-[1400px] grid-cols-1 lg:grid-cols-[280px_1fr]">
+        <aside className="hidden min-h-screen bg-black p-4 lg:block">
+          <div className="sticky top-0 space-y-3">
+            <Link to="/" className="flex items-center gap-3 rounded-xl bg-panel px-4 py-3 text-white hover:bg-panel2">
+              <span className="grid h-9 w-9 place-items-center rounded-lg bg-black/40">
+                <Music2 className="h-5 w-5 text-[color:var(--accent)]" />
+              </span>
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold tracking-tight">ONL Music</div>
+                <div className="truncate text-xs text-muted">Discovery</div>
+              </div>
+            </Link>
 
-      <div className="relative">
-        <div className="mx-auto grid max-w-[1400px] grid-cols-1 lg:grid-cols-[280px_1fr]">
-          <aside className="hidden min-h-screen border-r border-app bg-panel backdrop-blur lg:block">
-            <div className="sticky top-0 p-5">
-              <Link to="/" className="flex items-center gap-3 rounded-2xl bg-white/5 px-4 py-3 text-white hover:bg-white/10">
-                <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10">
-                  <Music2 className="h-5 w-5" />
-                </span>
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold tracking-tight">ONL Music</div>
-                  <div className="truncate text-xs text-muted">Discovery</div>
-                </div>
-              </Link>
-
-              <nav className="mt-5 space-y-1">
+            <div className="rounded-xl bg-panel p-2">
+              <nav className="space-y-1">
                 <NavItem to="/" label="Home" icon={<Home className="h-4 w-4" />} end />
                 <NavItem to="/songs" label="Songs" icon={<Music2 className="h-4 w-4" />} />
                 <NavItem to="/albums" label="Albums" icon={<Album className="h-4 w-4" />} />
                 <NavItem to="/artists" label="Artists" icon={<Users className="h-4 w-4" />} />
-                {role === "admin" ? (
-                  <NavItem to="/admin" label="Admin" icon={<Shield className="h-4 w-4" />} />
-                ) : null}
+                {role === "admin" ? <NavItem to="/admin" label="Admin" icon={<Shield className="h-4 w-4" />} /> : null}
               </nav>
+            </div>
 
-              <div className="mt-6 rounded-2xl border border-app bg-white/5 p-4 text-sm">
-                <div className="text-xs font-semibold uppercase tracking-wider text-muted">Account</div>
-                <div className="mt-2 text-white">{user?.email ?? "Guest"}</div>
-                <div className="mt-1 text-xs text-muted">{role ? `Role: ${role}` : "Browse publicly"}</div>
+            <div className="rounded-xl bg-panel p-4 text-sm">
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted">Account</div>
+              <div className="mt-2 truncate text-white">{user?.email ?? "Guest"}</div>
+              <div className="mt-1 text-xs text-muted">{role ? `Role: ${role}` : "Browse publicly"}</div>
+
+              {!loading && !user ? (
+                <Link
+                  to="/login"
+                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-white/90"
+                >
+                  <LogIn className="h-4 w-4" />
+                  Sign in
+                </Link>
+              ) : null}
+
+              {!loading && user ? (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await signOut();
+                    navigate("/");
+                  }}
+                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full bg-panel2 px-3 py-2 text-sm text-white hover:bg-white/10"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign out
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </aside>
+
+        <div className="min-w-0">
+          <header className="sticky top-0 z-40 bg-app backdrop-blur">
+            <div className="mx-auto flex max-w-[1400px] items-center justify-between px-4 py-4 sm:px-5">
+              <div className="flex items-center gap-3">
+                <Link to="/" className="grid h-10 w-10 place-items-center rounded-full bg-panel lg:hidden">
+                  <Music2 className="h-5 w-5 text-[color:var(--accent)]" />
+                </Link>
+                <div className="min-w-0">
+                  <div className="truncate text-lg font-semibold tracking-tight text-white">
+                    <PageTitle />
+                  </div>
+                  <div className="text-xs text-muted">Discovery · Metadata + links only</div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 lg:hidden">
+                {role === "admin" ? (
+                  <Link to="/admin" className="rounded-full bg-panel px-3 py-2 text-sm text-white hover:bg-panel2">
+                    Admin
+                  </Link>
+                ) : null}
 
                 {!loading && !user ? (
                   <Link
                     to="/login"
-                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-white px-3 py-2 text-sm font-medium text-black hover:bg-white/90"
+                    className="rounded-full bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-white/90"
                   >
-                    <LogIn className="h-4 w-4" />
                     Sign in
                   </Link>
                 ) : null}
@@ -103,119 +150,39 @@ export default function AppShell({ children }: { children: ReactNode }) {
                       await signOut();
                       navigate("/");
                     }}
-                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-app bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/15"
+                    className="rounded-full bg-panel px-3 py-2 text-sm text-white hover:bg-panel2"
                   >
-                    <LogOut className="h-4 w-4" />
                     Sign out
                   </button>
                 ) : null}
               </div>
             </div>
-          </aside>
 
-          <div className="min-w-0">
-            <header className="sticky top-0 z-40 border-b border-app bg-black/30 backdrop-blur">
-              <div className="mx-auto flex max-w-[1400px] items-center justify-between px-4 py-4 sm:px-5">
-                <div className="flex items-center gap-3">
-                  <Link to="/" className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 lg:hidden">
-                    <Music2 className="h-5 w-5" />
-                  </Link>
-                  <div>
-                    <div className="text-lg font-semibold tracking-tight text-white">
-                      <PageTitle />
-                    </div>
-                    <div className="text-xs text-muted">Metadata + links only · No streaming</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2 lg:hidden">
-                  {role === "admin" ? (
-                    <Link
-                      to="/admin"
-                      className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/15"
-                    >
-                      <Shield className="h-4 w-4" />
-                      Admin
-                    </Link>
-                  ) : null}
-
-                  {!loading && !user ? (
-                    <Link
-                      to="/login"
-                      className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-sm font-medium text-black hover:bg-white/90"
-                    >
-                      <LogIn className="h-4 w-4" />
-                      Sign in
-                    </Link>
-                  ) : null}
-
-                  {!loading && user ? (
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        await signOut();
-                        navigate("/");
-                      }}
-                      className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-sm text-white hover:bg-white/15"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      Sign out
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="mx-auto flex max-w-[1400px] items-center gap-2 px-4 pb-4 sm:px-5 lg:hidden">
+            <div className="mx-auto flex max-w-[1400px] items-center gap-2 px-4 pb-4 sm:px-5 lg:hidden">
+              {[
+                { to: "/", label: "Home", end: true },
+                { to: "/songs", label: "Songs" },
+                { to: "/albums", label: "Albums" },
+                { to: "/artists", label: "Artists" },
+              ].map((i) => (
                 <NavLink
-                  to="/"
-                  end
+                  key={i.to}
+                  to={i.to}
+                  end={i.end}
                   className={({ isActive }) =>
                     clsx(
                       "rounded-full px-3 py-2 text-sm transition",
-                      isActive ? "bg-white/10 text-white" : "text-zinc-300 hover:bg-white/5 hover:text-white",
+                      isActive ? "bg-white text-black" : "bg-panel text-white hover:bg-panel2",
                     )
                   }
                 >
-                  Home
+                  {i.label}
                 </NavLink>
-                <NavLink
-                  to="/songs"
-                  className={({ isActive }) =>
-                    clsx(
-                      "rounded-full px-3 py-2 text-sm transition",
-                      isActive ? "bg-white/10 text-white" : "text-zinc-300 hover:bg-white/5 hover:text-white",
-                    )
-                  }
-                >
-                  Songs
-                </NavLink>
-                <NavLink
-                  to="/albums"
-                  className={({ isActive }) =>
-                    clsx(
-                      "rounded-full px-3 py-2 text-sm transition",
-                      isActive ? "bg-white/10 text-white" : "text-zinc-300 hover:bg-white/5 hover:text-white",
-                    )
-                  }
-                >
-                  Albums
-                </NavLink>
-                <NavLink
-                  to="/artists"
-                  className={({ isActive }) =>
-                    clsx(
-                      "rounded-full px-3 py-2 text-sm transition",
-                      isActive ? "bg-white/10 text-white" : "text-zinc-300 hover:bg-white/5 hover:text-white",
-                    )
-                  }
-                >
-                  Artists
-                </NavLink>
-              </div>
-            </header>
+              ))}
+            </div>
+          </header>
 
-            <main className="mx-auto max-w-[1400px] px-4 pb-14 pt-8 sm:px-5">{children}</main>
-          </div>
+          <main className="mx-auto max-w-[1400px] px-4 pb-14 pt-4 sm:px-5 sm:pt-6">{children}</main>
         </div>
       </div>
     </div>

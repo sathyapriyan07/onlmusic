@@ -2,7 +2,7 @@ import { Helmet } from "react-helmet-async";
 
 export default function AdminHome() {
   return (
-    <div className="rounded-3xl border border-app bg-white/5 p-6 shadow-card">
+    <div className="rounded-xl border border-app bg-panel p-6">
       <Helmet>
         <title>Admin · ONL Music Discovery</title>
       </Helmet>

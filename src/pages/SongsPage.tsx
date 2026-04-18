@@ -74,7 +74,7 @@ export default function SongsPage() {
           <select
             value={year}
             onChange={(e) => setYear(e.target.value)}
-            className="rounded-2xl border border-app bg-white/5 px-4 py-3 text-sm text-white shadow-card outline-none backdrop-blur"
+            className="rounded-full border border-app bg-panel px-4 py-3 text-sm text-white shadow-card outline-none"
           >
             <option value="">All years</option>
             {years.map((y) => (
@@ -87,7 +87,7 @@ export default function SongsPage() {
             value={rights}
             onChange={(e) => setRights(e.target.value)}
             placeholder="Filter rights…"
-            className="rounded-2xl border border-app bg-white/5 px-4 py-3 text-sm text-white shadow-card outline-none placeholder:text-zinc-500 backdrop-blur"
+            className="rounded-full border border-app bg-panel px-4 py-3 text-sm text-white shadow-card outline-none placeholder:text-zinc-500"
           />
         </div>
       </div>

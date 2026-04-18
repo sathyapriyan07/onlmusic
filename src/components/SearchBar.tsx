@@ -10,7 +10,7 @@ export default function SearchBar({
   placeholder?: string;
 }) {
   return (
-    <label className="flex items-center gap-3 rounded-2xl border border-app bg-white/5 px-4 py-3 shadow-card backdrop-blur">
+    <label className="flex items-center gap-3 rounded-full border border-app bg-panel px-4 py-3 shadow-card">
       <Search className="h-4 w-4 text-muted" />
       <input
         value={value}

@@ -13,7 +13,7 @@ export default function LinkButtons({ links }: { links: Link[] }) {
           href={l.url}
           target="_blank"
           rel="noreferrer"
-          className="chip inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm text-white shadow-card hover:bg-white/10"
+          className="inline-flex items-center gap-2 rounded-full bg-panel2 px-3 py-2 text-sm text-white hover:bg-white/10"
         >
           <span className="text-muted">
             <PlatformLogo platform={l.platform} className="h-4 w-4" />

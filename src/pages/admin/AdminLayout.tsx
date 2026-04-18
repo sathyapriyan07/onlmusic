@@ -9,7 +9,7 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
 export default function AdminLayout() {
   return (
     <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
-      <aside className="rounded-3xl border border-app bg-white/5 p-4 shadow-card">
+      <aside className="rounded-xl border border-app bg-panel p-4">
         <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Admin</div>
         <nav className="space-y-1">
           <NavLink to="/admin" end className={linkClass}>

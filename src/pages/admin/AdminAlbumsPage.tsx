@@ -142,7 +142,7 @@ export default function AdminAlbumsPage() {
         <title>Admin Albums · ONL Music Discovery</title>
       </Helmet>
 
-      <div className="rounded-3xl border border-app bg-white/5 p-6 shadow-card">
+      <div className="rounded-xl border border-app bg-panel p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-lg font-semibold text-white">Albums</h1>
@@ -156,15 +156,15 @@ export default function AdminAlbumsPage() {
         {err ? <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">{err}</div> : null}
 
         <div className="mt-5 grid gap-3 lg:grid-cols-2">
-          <div className="rounded-3xl border border-app bg-white/5 p-4">
+          <div className="rounded-xl border border-app bg-panel2 p-4">
             <div className="text-sm font-semibold text-white">{editing ? "Edit album" : "Create album"}</div>
             <div className="mt-3 space-y-3">
-              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className="w-full rounded-2xl border border-app bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500 backdrop-blur" />
-              <input value={releaseYear} onChange={(e) => setReleaseYear(e.target.value)} placeholder="Release year (optional)" className="w-full rounded-2xl border border-app bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500 backdrop-blur" />
-              <input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="Cover URL (optional)" className="w-full rounded-2xl border border-app bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500 backdrop-blur" />
-              <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)} className="w-full rounded-2xl border border-app bg-white/5 px-4 py-3 text-sm text-white file:mr-3 file:rounded-xl file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:font-medium file:text-black backdrop-blur" />
+              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500" />
+              <input value={releaseYear} onChange={(e) => setReleaseYear(e.target.value)} placeholder="Release year (optional)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500" />
+              <input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="Cover URL (optional)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500" />
+              <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)} className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white file:mr-3 file:rounded-full file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:font-semibold file:text-black" />
 
-              <div className="rounded-2xl border border-app bg-white/5 p-3">
+              <div className="rounded-lg border border-app bg-black/20 p-3">
                 <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Album artists</div>
                 <div className="max-h-44 space-y-2 overflow-auto pr-1">
                   {sortedArtists.map((a) => (
@@ -184,11 +184,11 @@ export default function AdminAlbumsPage() {
               </div>
 
               <div className="flex gap-2">
-                <button type="button" disabled={saving} onClick={save} className="btn-primary rounded-2xl px-4 py-3 text-sm font-semibold disabled:opacity-50">
+                <button type="button" disabled={saving} onClick={save} className="btn-primary rounded-full px-4 py-3 text-sm font-semibold disabled:opacity-50">
                   {saving ? "Saving…" : "Save"}
                 </button>
                 {editing ? (
-                  <button type="button" onClick={resetForm} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-white hover:bg-white/10">
+                  <button type="button" onClick={resetForm} className="rounded-full bg-black/30 px-4 py-3 text-sm text-white hover:bg-black/40">
                     Cancel
                   </button>
                 ) : null}
@@ -196,14 +196,14 @@ export default function AdminAlbumsPage() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-app bg-white/5 p-4">
+          <div className="rounded-xl border border-app bg-panel2 p-4">
             <div className="text-sm font-semibold text-white">Existing</div>
             {loading ? (
               <div className="mt-3 text-sm text-muted">Loading…</div>
             ) : (
               <div className="mt-3 max-h-[520px] space-y-2 overflow-auto pr-2">
                 {albums.map((a) => (
-                  <div key={a.id} className="flex items-center justify-between gap-3 rounded-2xl border border-app bg-white/5 px-3 py-2">
+                  <div key={a.id} className="flex items-center justify-between gap-3 rounded-lg border border-app bg-black/20 px-3 py-2">
                     <div className="flex min-w-0 items-center gap-3">
                       <div className="h-10 w-10 overflow-hidden rounded-xl bg-black/20">
                         <img

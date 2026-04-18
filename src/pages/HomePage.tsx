@@ -63,17 +63,11 @@ export default function HomePage() {
         <title>Home · ONL Music Discovery</title>
       </Helmet>
 
-      <div className="relative overflow-hidden rounded-[32px] border border-app bg-white/5 p-6 shadow-card sm:p-7">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,55,95,0.28),rgba(255,55,95,0)_55%),radial-gradient(circle_at_70%_30%,rgba(10,132,255,0.18),rgba(10,132,255,0)_55%)]" />
-        <div className="relative">
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted">Discovery</div>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-            Find something new to love
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm text-muted">
-            Explore songs, albums, and artists — metadata + external links only. If a YouTube link exists, you’ll see an embedded player on the song page.
-          </p>
-        </div>
+      <div className="rounded-xl bg-panel p-6">
+        <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Home</h1>
+        <p className="mt-2 max-w-3xl text-sm text-muted">
+          Discover songs, albums, and artists. This app stores metadata + official external links only (no streaming); YouTube links can be embedded on the song page.
+        </p>
       </div>
 
       {loading ? (
@@ -99,7 +93,7 @@ export default function HomePage() {
             <SectionRow key={s.id} title={s.title}>
               {s.type === "songs"
                 ? (s.itemsResolved as Song[]).map((song) => (
-                    <div key={song.id} className="w-44 shrink-0 snap-start">
+                    <div key={song.id} className="w-44 shrink-0">
                       <MediaCard
                         to={`/songs/${song.id}`}
                         image={resolveImageSrc({
@@ -116,7 +110,7 @@ export default function HomePage() {
 
               {s.type === "albums"
                 ? (s.itemsResolved as Album[]).map((album) => (
-                    <div key={album.id} className="w-44 shrink-0 snap-start">
+                    <div key={album.id} className="w-44 shrink-0">
                       <MediaCard
                         to={`/albums/${album.id}`}
                         image={resolveImageSrc({
@@ -133,7 +127,7 @@ export default function HomePage() {
 
               {s.type === "artists"
                 ? (s.itemsResolved as Artist[]).map((artist) => (
-                    <div key={artist.id} className="w-44 shrink-0 snap-start">
+                    <div key={artist.id} className="w-44 shrink-0">
                       <MediaCard
                         to={`/artists/${artist.id}`}
                         image={resolveImageSrc({

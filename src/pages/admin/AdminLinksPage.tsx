@@ -94,23 +94,23 @@ export default function AdminLinksPage() {
         <title>Admin Links · ONL Music Discovery</title>
       </Helmet>
 
-      <div className="rounded-3xl border border-app bg-white/5 p-6 shadow-card">
+      <div className="rounded-xl border border-app bg-panel p-6">
         <h1 className="text-lg font-semibold text-white">Links</h1>
         <p className="mt-1 text-sm text-muted">Manage external links (YouTube, Spotify, Apple Music, YouTube Music, etc.).</p>
 
         {err ? <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">{err}</div> : null}
 
         <div className="mt-5 grid gap-3 lg:grid-cols-2">
-          <div className="rounded-3xl border border-app bg-white/5 p-4">
+          <div className="rounded-xl border border-app bg-panel2 p-4">
             <div className="text-sm font-semibold text-white">Create link</div>
             <div className="mt-3 space-y-3">
-              <select value={entityType} onChange={(e) => { setEntityType(e.target.value as LinkEntityType); setEntityId(""); }} className="w-full rounded-2xl border border-app bg-white/5 px-4 py-3 text-sm text-white outline-none backdrop-blur">
+              <select value={entityType} onChange={(e) => { setEntityType(e.target.value as LinkEntityType); setEntityId(""); }} className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none">
                 <option value="song">Song</option>
                 <option value="album">Album</option>
                 <option value="artist">Artist</option>
               </select>
 
-              <select value={entityId} onChange={(e) => setEntityId(e.target.value)} className="w-full rounded-2xl border border-app bg-white/5 px-4 py-3 text-sm text-white outline-none backdrop-blur">
+              <select value={entityId} onChange={(e) => setEntityId(e.target.value)} className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none">
                 <option value="">Select…</option>
                 {entities.sort((a, b) => a.label.localeCompare(b.label)).map((e) => (
                   <option key={e.id} value={e.id}>
@@ -119,23 +119,23 @@ export default function AdminLinksPage() {
                 ))}
               </select>
 
-              <input value={platform} onChange={(e) => setPlatform(e.target.value)} placeholder="Platform (YouTube, Spotify…)" className="w-full rounded-2xl border border-app bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500 backdrop-blur" />
-              <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="URL" className="w-full rounded-2xl border border-app bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500 backdrop-blur" />
+              <input value={platform} onChange={(e) => setPlatform(e.target.value)} placeholder="Platform (YouTube, Spotify…)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500" />
+              <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="URL" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500" />
 
-              <button type="button" disabled={saving} onClick={save} className="btn-primary rounded-2xl px-4 py-3 text-sm font-semibold disabled:opacity-50">
+              <button type="button" disabled={saving} onClick={save} className="btn-primary rounded-full px-4 py-3 text-sm font-semibold disabled:opacity-50">
                 {saving ? "Saving…" : "Create"}
               </button>
             </div>
           </div>
 
-          <div className="rounded-3xl border border-app bg-white/5 p-4">
+          <div className="rounded-xl border border-app bg-panel2 p-4">
             <div className="text-sm font-semibold text-white">Existing</div>
             {loading ? (
               <div className="mt-3 text-sm text-muted">Loading…</div>
             ) : (
               <div className="mt-3 max-h-[520px] space-y-2 overflow-auto pr-2">
                 {links.map((l) => (
-                  <div key={l.id} className="rounded-2xl border border-app bg-white/5 p-3">
+                  <div key={l.id} className="rounded-lg border border-app bg-black/20 p-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <div className="text-xs text-muted">

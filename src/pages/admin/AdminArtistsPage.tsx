@@ -109,7 +109,7 @@ export default function AdminArtistsPage() {
         <title>Admin Artists · ONL Music Discovery</title>
       </Helmet>
 
-      <div className="rounded-3xl border border-app bg-white/5 p-6 shadow-card">
+      <div className="rounded-xl border border-app bg-panel p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-lg font-semibold text-white">Artists</h1>
@@ -123,20 +123,20 @@ export default function AdminArtistsPage() {
         {err ? <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">{err}</div> : null}
 
         <div className="mt-5 grid gap-3 lg:grid-cols-2">
-          <div className="rounded-3xl border border-app bg-white/5 p-4">
+          <div className="rounded-xl border border-app bg-panel2 p-4">
             <div className="text-sm font-semibold text-white">{editing ? "Edit artist" : "Create artist"}</div>
             <div className="mt-3 space-y-3">
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="w-full rounded-2xl border border-app bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500 backdrop-blur" />
-              <textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Bio" rows={4} className="w-full rounded-2xl border border-app bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500 backdrop-blur" />
-              <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="Image URL (optional)" className="w-full rounded-2xl border border-app bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500 backdrop-blur" />
-              <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] ?? null)} className="w-full rounded-2xl border border-app bg-white/5 px-4 py-3 text-sm text-white file:mr-3 file:rounded-xl file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:font-medium file:text-black backdrop-blur" />
+              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500" />
+              <textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Bio" rows={4} className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500" />
+              <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="Image URL (optional)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500" />
+              <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] ?? null)} className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white file:mr-3 file:rounded-full file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:font-semibold file:text-black" />
 
               <div className="flex gap-2">
-                <button type="button" disabled={saving} onClick={save} className="btn-primary rounded-2xl px-4 py-3 text-sm font-semibold disabled:opacity-50">
+                <button type="button" disabled={saving} onClick={save} className="btn-primary rounded-full px-4 py-3 text-sm font-semibold disabled:opacity-50">
                   {saving ? "Saving…" : "Save"}
                 </button>
                 {editing ? (
-                  <button type="button" onClick={resetForm} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-white hover:bg-white/10">
+                  <button type="button" onClick={resetForm} className="rounded-full bg-black/30 px-4 py-3 text-sm text-white hover:bg-black/40">
                     Cancel
                   </button>
                 ) : null}
@@ -144,14 +144,14 @@ export default function AdminArtistsPage() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-app bg-white/5 p-4">
+          <div className="rounded-xl border border-app bg-panel2 p-4">
             <div className="text-sm font-semibold text-white">Existing</div>
             {loading ? (
               <div className="mt-3 text-sm text-muted">Loading…</div>
             ) : (
               <div className="mt-3 max-h-[520px] space-y-2 overflow-auto pr-2">
                 {artists.map((a) => (
-                  <div key={a.id} className="flex items-center justify-between gap-3 rounded-2xl border border-app bg-white/5 px-3 py-2">
+                  <div key={a.id} className="flex items-center justify-between gap-3 rounded-lg border border-app bg-black/20 px-3 py-2">
                     <div className="flex min-w-0 items-center gap-3">
                       <div className="h-10 w-10 overflow-hidden rounded-full bg-black/20">
                         <img

@@ -44,12 +44,10 @@ export default function LoginPage() {
         <title>Sign in · ONL Music Discovery</title>
       </Helmet>
 
-      <div className="relative overflow-hidden rounded-[32px] border border-app bg-white/5 p-6 shadow-card sm:p-7">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,55,95,0.20),rgba(255,55,95,0)_55%),radial-gradient(circle_at_80%_30%,rgba(10,132,255,0.14),rgba(10,132,255,0)_55%)]" />
-        <div className="relative">
-          <h1 className="text-2xl font-semibold tracking-tight text-white">
-            {mode === "signin" ? "Sign in" : "Create account"}
-          </h1>
+      <div className="rounded-xl bg-panel p-6">
+        <h1 className="text-2xl font-semibold tracking-tight text-white">
+          {mode === "signin" ? "Sign in" : "Create account"}
+        </h1>
         <p className="mt-1 text-sm text-muted">
           {mode === "signin"
             ? "Sign in to access admin tools (if you’re an admin)."
@@ -62,14 +60,14 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
             type="email"
-            className="w-full rounded-2xl border border-app bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500 backdrop-blur"
+            className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
           />
           <input
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
             type="password"
-            className="w-full rounded-2xl border border-app bg-white/5 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500 backdrop-blur"
+            className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
           />
 
           {err ? <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">{err}</div> : null}
@@ -78,7 +76,7 @@ export default function LoginPage() {
             type="button"
             disabled={loading || !email || !password}
             onClick={submit}
-            className="btn-primary w-full rounded-2xl px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+            className="btn-primary w-full rounded-full px-4 py-3 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Please wait…" : mode === "signin" ? "Sign in" : "Sign up"}
           </button>
@@ -86,11 +84,10 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => setMode((m) => (m === "signin" ? "signup" : "signin"))}
-            className="btn-secondary w-full rounded-2xl px-4 py-3 text-sm text-white hover:bg-white/10"
+            className="w-full rounded-full bg-panel2 px-4 py-3 text-sm text-white hover:bg-white/10"
           >
             {mode === "signin" ? "New here? Create an account" : "Already have an account? Sign in"}
           </button>
-        </div>
         </div>
       </div>
     </div>
