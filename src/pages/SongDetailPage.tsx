@@ -23,14 +23,6 @@ export default function SongDetailPage() {
   const [albumSongs, setAlbumSongs] = useState<Song[]>([]);
   const [artistSongs, setArtistSongs] = useState<Song[]>([]);
 
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 350);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
   useEffect(() => {
     let mounted = true;
     async function run() {
@@ -127,21 +119,6 @@ export default function SongDetailPage() {
             />
           </>
         )}
-      </div>
-
-      {/* Sticky header */}
-      <div
-        className={`sticky top-0 z-50 mx-auto max-w-[14000px] transition-all duration-300 ${
-          scrolled ? "bg-[var(--bg)]/95 backdrop-blur-md" : "bg-transparent"
-        }`}
-      >
-        <div className="flex items-center gap-3 px-4 py-3 sm:px-5">
-          {cover && <img src={cover} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" />}
-          <div className="min-w-0">
-            <div className="truncate text-sm font-semibold text-white">{song.title}</div>
-            <div className="truncate text-xs text-muted">{artistsText || "Unknown"}</div>
-          </div>
-        </div>
       </div>
 
       {/* Hero */}
