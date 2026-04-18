@@ -7,6 +7,14 @@ import { resolveImageSrc } from "../../lib/images";
 
 const BUCKET = "album-covers";
 
+interface ItunesCollection {
+  collectionId: number;
+  collectionName: string;
+  artistName: string;
+  releaseDate: string | null;
+  artworkUrl100: string | null;
+}
+
 export default function AdminAlbumsPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -20,6 +28,11 @@ export default function AdminAlbumsPage() {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [artistIds, setArtistIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importQuery, setImportQuery] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importResults, setImportResults] = useState<ItunesCollection[]>([]);
 
   async function refresh() {
     setLoading(true);
@@ -134,6 +147,49 @@ export default function AdminAlbumsPage() {
     }
   }
 
+  async function searchItunes(q: string) {
+    if (!q.trim()) return;
+    setImporting(true);
+    setErr(null);
+    try {
+      const term = encodeURIComponent(q.trim());
+      const resp = await fetch(`https://itunes.apple.com/search?term=${term}&media=music&entity=album&limit=25`);
+      const data = await resp.json();
+      const results: ItunesCollection[] = (data.results ?? []).map((r: Record<string, unknown>) => ({
+        collectionId: r.collectionId as number,
+        collectionName: r.collectionName as string,
+        artistName: r.artistName as string,
+        releaseDate: r.releaseDate as string | null,
+        artworkUrl100: r.artworkUrl100 as string | null,
+      }));
+      setImportResults(results);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to search iTunes.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  function importFromItunes(r: ItunesCollection) {
+    const existingAlbum = albums.find(
+      (a) => a.title.toLowerCase() === r.collectionName.toLowerCase()
+    );
+    if (existingAlbum) {
+      if (!confirm(`"${r.collectionName}" already exists. Select anyway?`)) return;
+      startEdit(existingAlbum);
+    } else {
+      resetForm();
+      setTitle(r.collectionName);
+      if (r.releaseDate) {
+        setReleaseYear(r.releaseDate.slice(0, 4));
+      }
+      if (r.artworkUrl100) {
+        setCoverUrl(r.artworkUrl100.replace("100x100", "600x600"));
+      }
+    }
+    setImportModalOpen(false);
+  }
+
   const sortedArtists = useMemo(() => [...artists].sort((a, b) => a.name.localeCompare(b.name)), [artists]);
 
   return (
@@ -148,9 +204,14 @@ export default function AdminAlbumsPage() {
             <h1 className="text-lg font-semibold text-white">Albums</h1>
             <p className="mt-1 text-sm text-muted">CRUD albums and assign multiple artists.</p>
           </div>
-          <button type="button" onClick={resetForm} className="rounded-2xl border border-app bg-panel2 px-4 py-3 text-sm text-white hover:bg-white/10">
-            New album
-          </button>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setImportModalOpen(true)} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-white hover:bg-white/10">
+              iTunes import
+            </button>
+            <button type="button" onClick={resetForm} className="rounded-2xl border border-app bg-panel2 px-4 py-3 text-sm text-white hover:bg-white/10">
+              New album
+            </button>
+          </div>
         </div>
 
         {err ? <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">{err}</div> : null}
@@ -233,6 +294,50 @@ export default function AdminAlbumsPage() {
           </div>
         </div>
       </div>
+
+      {importModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-app bg-panel p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">iTunes Import</h2>
+              <button type="button" onClick={() => setImportModalOpen(false)} className="text-muted hover:text-white">
+                ✕
+              </button>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <input
+                value={importQuery}
+                onChange={(e) => setImportQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && searchItunes(importQuery)}
+                placeholder="Search albums..."
+                className="flex-1 rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
+              />
+              <button type="button" disabled={importing} onClick={() => searchItunes(importQuery)} className="btn-primary rounded-lg px-4 py-3 text-sm font-semibold disabled:opacity-50">
+                {importing ? "..." : "Search"}
+              </button>
+            </div>
+            <div className="mt-4 max-h-80 space-y-2 overflow-auto pr-2">
+              {importResults.map((r) => (
+                <div key={r.collectionId} className="flex items-center gap-3 rounded-lg border border-app bg-black/20 p-3">
+                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-black/40">
+                    {r.artworkUrl100 && <img src={r.artworkUrl100} alt="" className="h-full w-full object-cover" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-white">{r.collectionName}</div>
+                    <div className="truncate text-xs text-muted">{r.artistName}</div>
+                  </div>
+                  <button type="button" onClick={() => importFromItunes(r)} className="shrink-0 btn-primary rounded-lg px-3 py-2 text-xs font-semibold">
+                    Import
+                  </button>
+                </div>
+              ))}
+              {importResults.length === 0 && !importing && (
+                <div className="text-center text-sm text-muted">Search for an album to import from iTunes.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

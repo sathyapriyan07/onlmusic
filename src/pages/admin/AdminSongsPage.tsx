@@ -9,6 +9,16 @@ const BUCKET = "song-covers";
 
 type Credit = { artist_id: string; role: string };
 
+interface ItunesResult {
+  trackId: number;
+  trackName: string;
+  artistName: string;
+  collectionName: string | null;
+  releaseDate: string | null;
+  trackTimeMillis: number | null;
+  artworkUrl100: string | null;
+}
+
 export default function AdminSongsPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -26,6 +36,11 @@ export default function AdminSongsPage() {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [credits, setCredits] = useState<Credit[]>([]);
   const [saving, setSaving] = useState(false);
+
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importQuery, setImportQuery] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importResults, setImportResults] = useState<ItunesResult[]>([]);
 
   async function refresh() {
     setLoading(true);
@@ -153,6 +168,56 @@ export default function AdminSongsPage() {
     }
   }
 
+  async function searchItunes(q: string) {
+    if (!q.trim()) return;
+    setImporting(true);
+    setErr(null);
+    try {
+      const term = encodeURIComponent(q.trim());
+      const resp = await fetch(`https://itunes.apple.com/search?term=${term}&media=music&entity=song&limit=25`);
+      const data = await resp.json();
+      const results: ItunesResult[] = (data.results ?? []).map((r: Record<string, unknown>) => ({
+        trackId: r.trackId as number,
+        trackName: r.trackName as string,
+        artistName: r.artistName as string,
+        collectionName: r.collectionName as string | null,
+        releaseDate: r.releaseDate as string | null,
+        trackTimeMillis: r.trackTimeMillis as number | null,
+        artworkUrl100: r.artworkUrl100 as string | null,
+      }));
+      setImportResults(results);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to search iTunes.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  async function importFromItunes(r: ItunesResult) {
+    const existingSong = songs.find(
+      (s) => s.title.toLowerCase() === r.trackName.toLowerCase()
+    );
+    if (existingSong) {
+      if (!confirm(`"${r.trackName}" already exists. Select anyway?`)) return;
+      setEditing(existingSong);
+    } else {
+      resetForm();
+      setTitle(r.trackName);
+      if (r.releaseDate) {
+        setYear(r.releaseDate.slice(0, 4));
+      }
+      if (r.trackTimeMillis) {
+        const mins = Math.floor(r.trackTimeMillis / 60000);
+        const secs = Math.floor((r.trackTimeMillis % 60000) / 1000);
+        setDuration(`${mins}:${secs.toString().padStart(2, "0")}`);
+      }
+      if (r.artworkUrl100) {
+        setCoverUrl(r.artworkUrl100.replace("100x100", "600x600"));
+      }
+    }
+    setImportModalOpen(false);
+  }
+
   const sortedAlbums = useMemo(() => [...albums].sort((a, b) => a.title.localeCompare(b.title)), [albums]);
   const sortedArtists = useMemo(() => [...artists].sort((a, b) => a.name.localeCompare(b.name)), [artists]);
 
@@ -168,9 +233,14 @@ export default function AdminSongsPage() {
             <h1 className="text-lg font-semibold text-white">Songs</h1>
             <p className="mt-1 text-sm text-muted">CRUD songs, assign album, and add multiple artists with roles (singer, composer, lyricist…).</p>
           </div>
-          <button type="button" onClick={resetForm} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-white hover:bg-white/10">
-            New song
-          </button>
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setImportModalOpen(true)} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-white hover:bg-white/10">
+              iTunes import
+            </button>
+            <button type="button" onClick={resetForm} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-white hover:bg-white/10">
+              New song
+            </button>
+          </div>
         </div>
 
         {err ? <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">{err}</div> : null}
@@ -300,6 +370,50 @@ export default function AdminSongsPage() {
           </div>
         </div>
       </div>
+
+      {importModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-app bg-panel p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">iTunes Import</h2>
+              <button type="button" onClick={() => setImportModalOpen(false)} className="text-muted hover:text-white">
+                ✕
+              </button>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <input
+                value={importQuery}
+                onChange={(e) => setImportQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && searchItunes(importQuery)}
+                placeholder="Search songs..."
+                className="flex-1 rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
+              />
+              <button type="button" disabled={importing} onClick={() => searchItunes(importQuery)} className="btn-primary rounded-lg px-4 py-3 text-sm font-semibold disabled:opacity-50">
+                {importing ? "..." : "Search"}
+              </button>
+            </div>
+            <div className="mt-4 max-h-80 space-y-2 overflow-auto pr-2">
+              {importResults.map((r) => (
+                <div key={r.trackId} className="flex items-center gap-3 rounded-lg border border-app bg-black/20 p-3">
+                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-black/40">
+                    {r.artworkUrl100 && <img src={r.artworkUrl100} alt="" className="h-full w-full object-cover" />}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-white">{r.trackName}</div>
+                    <div className="truncate text-xs text-muted">{r.artistName}</div>
+                  </div>
+                  <button type="button" onClick={() => importFromItunes(r)} className="shrink-0 btn-primary rounded-lg px-3 py-2 text-xs font-semibold">
+                    Import
+                  </button>
+                </div>
+              ))}
+              {importResults.length === 0 && !importing && (
+                <div className="text-center text-sm text-muted">Search for a song to import from iTunes.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

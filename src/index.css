@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+@theme {
+  --font-size-xs: 0.65rem;
+  --font-size-sm: 0.7rem;
+  --font-size-base: 0.75rem;
+  --font-size-lg: 0.8rem;
+  --font-size-xl: 0.875rem;
+  --font-size-2xl: 0.95rem;
+  --font-size-3xl: 1.1rem;
+}
+
 :root {
   --bg: #121212;
   --panel: #181818;
@@ -9,6 +19,10 @@
   --border: rgba(255, 255, 255, 0.08);
   --accent: #1db954;
   --accent2: #1ed760;
+}
+
+html {
+  font-size: 13px;
 }
 
 html,
