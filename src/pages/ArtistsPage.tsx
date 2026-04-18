@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
-import SearchBar from "../components/SearchBar";
 import MediaCard from "../components/MediaCard";
 import { ErrorState, EmptyState } from "../components/States";
 import { SkeletonCard } from "../components/Skeletons";
@@ -9,7 +8,6 @@ import type { Artist } from "../lib/types";
 import { resolveImageSrc } from "../lib/images";
 
 export default function ArtistsPage() {
-  const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [artists, setArtists] = useState<Artist[]>([]);
@@ -20,7 +18,7 @@ export default function ArtistsPage() {
       setLoading(true);
       setErr(null);
       try {
-        const list = await listArtists({ q: q.trim() || undefined, published: true });
+        const list = await listArtists({ published: true });
         if (!mounted) return;
         setArtists(list);
       } catch (e) {
@@ -33,37 +31,28 @@ export default function ArtistsPage() {
     return () => {
       mounted = false;
     };
-  }, [q]);
+  }, []);
 
   return (
     <div>
       <Helmet>
-        <title>Artists · ONL Music Discovery</title>
+        <title>Artists · ONL Music</title>
       </Helmet>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight text-white">Artists</h1>
-        <div className="w-full sm:w-96">
-          <SearchBar value={q} onChange={setQ} placeholder="Search artists…" />
-        </div>
-      </div>
+      <h1 className="mb-6 text-2xl font-bold text-white">Artists</h1>
 
       {loading ? (
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {Array.from({ length: 10 }).map((_, i) => (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+          {Array.from({ length: 12 }).map((_, i) => (
             <SkeletonCard key={i} />
           ))}
         </div>
       ) : err ? (
-        <div className="mt-6">
-          <ErrorState title="Could not load artists" message={err} />
-        </div>
+        <ErrorState title="Error" message={err} />
       ) : artists.length === 0 ? (
-        <div className="mt-6">
-          <EmptyState title="No artists found" message="Try a different search." />
-        </div>
+        <EmptyState title="No artists" />
       ) : (
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
           {artists.map((a) => (
             <MediaCard
               key={a.id}

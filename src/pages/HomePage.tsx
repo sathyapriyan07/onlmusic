@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Helmet } from "react-helmet-async";
-import SectionRow from "../components/SectionRow";
 import MediaCard from "../components/MediaCard";
 import { ErrorState, EmptyState } from "../components/States";
-import { SkeletonRow } from "../components/Skeletons";
+import { SkeletonCard } from "../components/Skeletons";
 import { listHomepageSections, listSongs, listAlbums, listArtists } from "../lib/db";
 import type { Album, Artist, HomepageSection, Song } from "../lib/types";
 import { resolveImageSrc } from "../lib/images";
@@ -26,8 +24,6 @@ export default function HomePage() {
         if (!mounted) return;
         setSections(secs);
 
-        // Fetch in batches by type (by IDs). For simplicity, pull latest lists and map by id.
-        // This keeps the frontend simple while remaining fast for small-to-medium catalogs.
         const [songs, albums, artists] = await Promise.all([
           listSongs({ published: true }),
           listAlbums({ published: true }),
@@ -57,93 +53,89 @@ export default function HomePage() {
     });
   }, [sections, songsById, albumsById, artistsById]);
 
-  return (
-    <div>
-      <Helmet>
-        <title>Home · ONL Music Discovery</title>
-      </Helmet>
-
-      <div className="rounded-xl bg-panel p-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Home</h1>
-        <p className="mt-2 max-w-3xl text-sm text-muted">
-          Discover songs, albums, and artists. This app stores metadata + official external links only (no streaming); YouTube links can be embedded on the song page.
-        </p>
+  if (loading) {
+    return (
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        {Array.from({ length: 10 }).map((_, i) => (
+          <SkeletonCard key={i} />
+        ))}
       </div>
+    );
+  }
 
-      {loading ? (
-        <div className="mt-8 space-y-8">
-          <SkeletonRow />
-          <SkeletonRow />
-          <SkeletonRow />
-        </div>
-      ) : err ? (
-        <div className="mt-8">
-          <ErrorState title="Could not load homepage" message={err} />
-        </div>
-      ) : resolved.length === 0 ? (
-        <div className="mt-8">
-          <EmptyState
-            title="No sections yet"
-            message="Admins can create homepage sections (Trending Songs, Popular Albums, Featured Artists) from the Admin dashboard."
-          />
-        </div>
-      ) : (
-        <div>
-          {resolved.map((s) => (
-            <SectionRow key={s.id} title={s.title}>
-              {s.type === "songs"
-                ? (s.itemsResolved as Song[]).map((song) => (
-                    <div key={song.id} className="w-44 shrink-0">
-                      <MediaCard
-                        to={`/songs/${song.id}`}
-                        image={resolveImageSrc({
-                          url: song.cover_url,
-                          filePath: song.cover_file_path,
-                          bucket: "song-covers",
-                        })}
-                        title={song.title}
-                        subtitle={song.year ? String(song.year) : undefined}
-                      />
-                    </div>
-                  ))
-                : null}
+  if (err) return <ErrorState title="Error" message={err} />;
+  if (resolved.length === 0) {
+    return (
+      <EmptyState
+        title="No content yet"
+        message="Admin can add homepage sections to display featured content."
+      />
+    );
+  }
 
-              {s.type === "albums"
-                ? (s.itemsResolved as Album[]).map((album) => (
-                    <div key={album.id} className="w-44 shrink-0">
-                      <MediaCard
-                        to={`/albums/${album.id}`}
-                        image={resolveImageSrc({
-                          url: album.cover_url,
-                          filePath: album.cover_file_path,
-                          bucket: "album-covers",
-                        })}
-                        title={album.title}
-                        subtitle={album.release_year ? String(album.release_year) : undefined}
-                      />
-                    </div>
-                  ))
-                : null}
+  return (
+    <div className="space-y-8">
+      {resolved.map((section) => (
+        <section key={section.id}>
+          <h2 className="mb-4 text-xl font-bold text-white">{section.title}</h2>
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {section.itemsResolved.map((item) => {
+              const isSong = section.type === "songs";
+              const isAlbum = section.type === "albums";
+              return (
+                <div key={item.id} className="w-40 shrink-0 sm:w-44">
+                  <MediaCard
+                    to={isSong ? `/songs/${item.id}` : isAlbum ? `/albums/${item.id}` : `/artists/${item.id}`}
+                    image={resolveImageSrc({
+                      url: isSong ? (item as Song).cover_url : isAlbum ? (item as Album).cover_url : (item as Artist).image_url,
+                      filePath: isSong
+                        ? (item as Song).cover_file_path
+                        : isAlbum
+                          ? (item as Album).cover_file_path
+                          : (item as Artist).image_file_path,
+                      bucket: isSong ? "song-covers" : isAlbum ? "album-covers" : "artist-images",
+                    })}
+                    title={isSong ? (item as Song).title : isAlbum ? (item as Album).title : (item as Artist).name}
+                    subtitle={
+                      isSong
+                        ? (item as Song).year
+                          ? String((item as Song).year)
+                          : undefined
+                        : isAlbum
+                          ? (item as Album).release_year
+                            ? String((item as Album).release_year)
+                            : undefined
+                          : undefined
+                    }
+                    variant={section.type === "artists" ? "round" : "square"}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ))}
 
-              {s.type === "artists"
-                ? (s.itemsResolved as Artist[]).map((artist) => (
-                    <div key={artist.id} className="w-44 shrink-0">
-                      <MediaCard
-                        to={`/artists/${artist.id}`}
-                        image={resolveImageSrc({
-                          url: artist.image_url,
-                          filePath: artist.image_file_path,
-                          bucket: "artist-images",
-                        })}
-                        title={artist.name}
-                        variant="round"
-                      />
-                    </div>
-                  ))
-                : null}
-            </SectionRow>
-          ))}
-        </div>
+      {/* Fallback: Recent if no sections */}
+      {resolved.length === 0 && (
+        <>
+          <section>
+            <h2 className="mb-4 text-xl font-bold text-white">Recently Added</h2>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              {Object.values(songsById)
+                .slice(0, 5)
+                .map((s) => (
+                  <MediaCard
+                    key={s.id}
+                    to={`/songs/${s.id}`}
+                    image={resolveImageSrc({ url: s.cover_url, filePath: s.cover_file_path, bucket: "song-covers" })}
+                    title={s.title}
+                    subtitle={s.year ? String(s.year) : undefined}
+                  />
+                ))}
+            </div>
+          </section>
+        </>
       )}
     </div>
   );

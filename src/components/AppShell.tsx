@@ -1,45 +1,9 @@
 import type { ReactNode } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Album, Home, LogIn, LogOut, Music2, Shield, Users } from "lucide-react";
+import { Album, Home, Music2, Shield, Users } from "lucide-react";
 import clsx from "clsx";
 import { useAuth } from "../state/AuthProvider";
 import UnifiedSearch from "./UnifiedSearch";
-
-function NavItem({
-  to,
-  label,
-  icon,
-  end,
-}: {
-  to: string;
-  label: string;
-  icon: React.ReactNode;
-  end?: boolean;
-}) {
-  return (
-    <NavLink
-      to={to}
-      end={end}
-      className={({ isActive }) =>
-        clsx(
-          "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition",
-          isActive ? "bg-panel2 text-white" : "text-zinc-300 hover:bg-panel2 hover:text-white",
-        )
-      }
-    >
-      {({ isActive }) => (
-        <>
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-black/30 transition group-hover:bg-black/40">
-            <span className={clsx("transition", isActive ? "text-[color:var(--accent)]" : "text-zinc-200")}>
-              {icon}
-            </span>
-          </span>
-          <span className="font-medium">{label}</span>
-        </>
-      )}
-    </NavLink>
-  );
-}
 
 function PageTitle() {
   const loc = useLocation();
@@ -53,142 +17,155 @@ function PageTitle() {
 }
 
 export default function AppShell({ children }: { children: ReactNode }) {
-  const { user, role, loading, signOut } = useAuth();
+  const { user, role, signOut } = useAuth();
   const navigate = useNavigate();
 
+  const navItems = [
+    { to: "/", label: "Home", icon: Home },
+    { to: "/songs", label: "Songs", icon: Music2 },
+    { to: "/albums", label: "Albums", icon: Album },
+    { to: "/artists", label: "Artists", icon: Users },
+  ];
+
   return (
-    <div className="min-h-screen bg-app">
-      <div className="mx-auto grid max-w-[1400px] grid-cols-1 lg:grid-cols-[280px_1fr]">
-        <aside className="hidden min-h-screen bg-black p-4 lg:block">
-          <div className="sticky top-0 space-y-3">
-            <Link to="/" className="flex items-center gap-3 rounded-xl bg-panel px-4 py-3 text-white hover:bg-panel2">
-              <span className="grid h-9 w-9 place-items-center rounded-lg bg-black/40">
-                <Music2 className="h-5 w-5 text-[color:var(--accent)]" />
-              </span>
-              <div className="min-w-0">
-                <div className="truncate text-sm font-semibold tracking-tight">ONL Music</div>
-                <div className="truncate text-xs text-muted">Discovery</div>
-              </div>
+    <div className="flex min-h-screen bg-[#121212]">
+      {/* Desktop Sidebar */}
+      <aside className="fixed bottom-0 left-0 top-0 hidden w-[240px] flex-col overflow-y-auto bg-black pb-6 lg:flex">
+        <Link to="/" className="flex items-center gap-3 px-6 py-6">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--accent)]">
+            <Music2 className="h-5 w-5 text-black" />
+          </div>
+          <span className="text-lg font-bold text-white">ONL Music</span>
+        </Link>
+
+        <nav className="flex-1 space-y-1 px-3">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === "/"}
+              className={({ isActive }) =>
+                clsx(
+                  "flex items-center gap-4 rounded-lg px-4 py-3 text-sm font-medium transition",
+                  isActive ? "bg-white/10 text-white" : "text-zinc-400 hover:text-white"
+                )
+              }
+            >
+              <item.icon className="h-5 w-5" />
+              {item.label}
+            </NavLink>
+          ))}
+          {role === "admin" && (
+            <NavLink
+              to="/admin"
+              className={({ isActive }) =>
+                clsx(
+                  "flex items-center gap-4 rounded-lg px-4 py-3 text-sm font-medium transition",
+                  isActive ? "bg-white/10 text-white" : "text-zinc-400 hover:text-white"
+                )
+              }
+            >
+              <Shield className="h-5 w-5" />
+              Admin
+            </NavLink>
+          )}
+        </nav>
+
+        <div className="border-t border-white/10 px-6 py-4">
+          <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">Account</div>
+          <div className="truncate text-sm text-zinc-400">{user?.email ?? "Guest"}</div>
+          {user ? (
+            <button
+              onClick={async () => {
+                await signOut();
+                navigate("/");
+              }}
+              className="mt-2 text-sm text-zinc-400 hover:text-white"
+            >
+              Sign out
+            </button>
+          ) : (
+            <Link to="/login" className="mt-2 inline-block text-sm font-semibold text-white hover:underline">
+              Sign in
             </Link>
+          )}
+        </div>
+      </aside>
 
-            <div className="rounded-xl bg-panel p-2">
-              <nav className="space-y-1">
-                <NavItem to="/" label="Home" icon={<Home className="h-4 w-4" />} end />
-                <NavItem to="/songs" label="Songs" icon={<Music2 className="h-4 w-4" />} />
-                <NavItem to="/albums" label="Albums" icon={<Album className="h-4 w-4" />} />
-                <NavItem to="/artists" label="Artists" icon={<Users className="h-4 w-4" />} />
-                {role === "admin" ? <NavItem to="/admin" label="Admin" icon={<Shield className="h-4 w-4" />} /> : null}
-              </nav>
-            </div>
-
-            <div className="rounded-xl bg-panel p-4 text-sm">
-              <div className="text-xs font-semibold uppercase tracking-wider text-muted">Account</div>
-              <div className="mt-2 truncate text-white">{user?.email ?? "Guest"}</div>
-              <div className="mt-1 text-xs text-muted">{role ? `Role: ${role}` : "Browse publicly"}</div>
-
-              {!loading && !user ? (
-                <Link
-                  to="/login"
-                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-white/90"
+      {/* Main Content */}
+      <main className="flex-1 pb-24 lg:ml-[240px]">
+        {/* Top Bar - Desktop */}
+        <header className="sticky top-0 z-40 hidden items-center justify-between bg-black/80 px-8 py-4 backdrop-blur-lg lg:flex">
+          <div className="flex items-center gap-4">
+            <div className="flex gap-2">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === "/"}
+                  className={({ isActive }) =>
+                    clsx(
+                      "rounded-full px-4 py-2 text-sm font-medium transition",
+                      isActive ? "bg-white text-black" : "text-zinc-400 hover:text-white"
+                    )
+                  }
                 >
-                  <LogIn className="h-4 w-4" />
-                  Sign in
-                </Link>
-              ) : null}
-
-              {!loading && user ? (
-                <button
-                  type="button"
-                  onClick={async () => {
-                    await signOut();
-                    navigate("/");
-                  }}
-                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full bg-panel2 px-3 py-2 text-sm text-white hover:bg-white/10"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Sign out
-                </button>
-              ) : null}
+                  {item.label}
+                </NavLink>
+              ))}
             </div>
           </div>
-        </aside>
+          <div className="w-72">
+            <UnifiedSearch />
+          </div>
+        </header>
 
-        <div className="min-w-0">
-          <header className="sticky top-0 z-40 bg-app backdrop-blur">
-            <div className="mx-auto flex max-w-[1400px] items-center justify-between px-4 py-4 sm:px-5">
-              <div className="flex items-center gap-3">
-                <Link to="/" className="grid h-10 w-10 place-items-center rounded-full bg-panel lg:hidden">
-                  <Music2 className="h-5 w-5 text-[color:var(--accent)]" />
-                </Link>
-                <div className="min-w-0">
-                  <div className="truncate text-lg font-semibold tracking-tight text-white">
-                    <PageTitle />
-                  </div>
-                  <div className="text-xs text-muted">Discovery · Metadata + links only</div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 lg:hidden">
-                {role === "admin" ? (
-                  <Link to="/admin" className="rounded-full bg-panel px-3 py-2 text-sm text-white hover:bg-panel2">
-                    Admin
-                  </Link>
-                ) : null}
-
-                {!loading && !user ? (
-                  <Link
-                    to="/login"
-                    className="rounded-full bg-white px-3 py-2 text-sm font-semibold text-black hover:bg-white/90"
-                  >
-                    Sign in
-                  </Link>
-                ) : null}
-
-                {!loading && user ? (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await signOut();
-                      navigate("/");
-                    }}
-                    className="rounded-full bg-panel px-3 py-2 text-sm text-white hover:bg-panel2"
-                  >
-                    Sign out
-                  </button>
-                ) : null}
-              </div>
+        {/* Page Title - Mobile */}
+        <div className="flex items-center justify-between border-b border-white/5 px-5 py-4 lg:hidden">
+          <div>
+            <div className="text-xl font-bold text-white">
+              <PageTitle />
             </div>
-
-            <div className="mx-auto flex max-w-[1400px] flex-col gap-3 px-4 pb-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
-              <UnifiedSearch />
-              <div className="flex items-center gap-2">
-                {[
-                  { to: "/", label: "Home", end: true },
-                  { to: "/songs", label: "Songs" },
-                  { to: "/albums", label: "Albums" },
-                  { to: "/artists", label: "Artists" },
-                ].map((i) => (
-                  <NavLink
-                    key={i.to}
-                    to={i.to}
-                    end={i.end}
-                    className={({ isActive }) =>
-                      clsx(
-                        "rounded-full px-3 py-2 text-sm transition",
-                        isActive ? "bg-white text-black" : "bg-panel text-white hover:bg-panel2",
-                      )
-                    }
-                  >
-                    {i.label}
-                  </NavLink>
-                ))}
-              </div>
-            </div>
-          </header>
-
-          <main className="mx-auto max-w-[1400px] px-4 pb-14 pt-4 sm:px-5 sm:pt-6">{children}</main>
+            <div className="text-xs text-zinc-500">Discovery</div>
+          </div>
+          {role === "admin" && (
+            <Link
+              to="/admin"
+              className="rounded-full bg-white/10 px-4 py-2 text-sm font-medium text-white"
+            >
+              Admin
+            </Link>
+          )}
         </div>
-      </div>
+
+        {/* Search - Mobile */}
+        <div className="px-4 py-3 lg:hidden">
+          <UnifiedSearch />
+        </div>
+
+        {/* Page Content */}
+        <div className="px-4 py-4 sm:px-6 lg:px-8">{children}</div>
+      </main>
+
+      {/* Mobile Bottom Nav */}
+      <nav className="fixed bottom-0 left-0 right-0 flex items-center justify-around border-t border-white/10 bg-black/95 py-2 lg:hidden z-50">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.to === "/"}
+            className={({ isActive }) =>
+              clsx(
+                "flex flex-col items-center gap-1 px-4 py-2 text-xs font-medium transition",
+                isActive ? "text-[var(--accent)]" : "text-zinc-500"
+              )
+            }
+          >
+            <item.icon className="h-5 w-5" />
+            {item.label}
+          </NavLink>
+        ))}
+      </nav>
     </div>
   );
 }
