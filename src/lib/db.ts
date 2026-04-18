@@ -99,7 +99,7 @@ export async function listSongs(params?: {
 export async function getSong(id: string) {
   const { data, error } = await supabase
     .from("songs")
-    .select("id,title,album_id,duration,year,music_rights,cover_url,cover_file_path,created_at")
+    .select("id,title,album_id,duration,year,music_rights,cover_url,cover_file_path,preview_url,created_at")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
