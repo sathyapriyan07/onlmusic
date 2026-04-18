@@ -29,14 +29,17 @@ export async function listHomepageSections(): Promise<HomepageSection[]> {
   return (data ?? []) as HomepageSection[];
 }
 
-export async function listArtists(params?: { q?: string }): Promise<Artist[]> {
+export async function listArtists(params?: { q?: string; published?: boolean }): Promise<Artist[]> {
   let query = supabase
     .from("artists")
-    .select("id,name,image_url,image_file_path,bio,created_at")
+    .select("id,name,image_url,image_file_path,bio,published,created_at")
     .order("created_at", { ascending: false });
 
   if (params?.q) {
     query = query.ilike("name", `%${params.q}%`);
+  }
+  if (params?.published !== undefined) {
+    query = query.eq("published", params.published);
   }
 
   const { data, error } = await query;
@@ -47,20 +50,23 @@ export async function listArtists(params?: { q?: string }): Promise<Artist[]> {
 export async function getArtist(id: string) {
   const { data, error } = await supabase
     .from("artists")
-    .select("id,name,image_url,image_file_path,bio,created_at")
+    .select("id,name,image_url,image_file_path,bio,published,created_at")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
   return data as Artist | null;
 }
 
-export async function listAlbums(params?: { q?: string }): Promise<Album[]> {
+export async function listAlbums(params?: { q?: string; published?: boolean }): Promise<Album[]> {
   let query = supabase
     .from("albums")
-    .select("id,title,cover_url,cover_file_path,release_year,created_at")
+    .select("id,title,cover_url,cover_file_path,release_year,published,created_at")
     .order("created_at", { ascending: false });
 
   if (params?.q) query = query.ilike("title", `%${params.q}%`);
+  if (params?.published !== undefined) {
+    query = query.eq("published", params.published);
+  }
 
   const { data, error } = await query;
   if (error) throw error;
@@ -70,7 +76,7 @@ export async function listAlbums(params?: { q?: string }): Promise<Album[]> {
 export async function getAlbum(id: string) {
   const { data, error } = await supabase
     .from("albums")
-    .select("id,title,cover_url,cover_file_path,release_year,created_at")
+    .select("id,title,cover_url,cover_file_path,release_year,published,created_at")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -81,15 +87,19 @@ export async function listSongs(params?: {
   q?: string;
   year?: number;
   rights?: string;
+  published?: boolean;
 }): Promise<Song[]> {
   let query = supabase
     .from("songs")
-    .select("id,title,album_id,duration,year,music_rights,cover_url,cover_file_path,created_at")
+    .select("id,title,album_id,duration,year,music_rights,cover_url,cover_file_path,preview_url,published,created_at")
     .order("created_at", { ascending: false });
 
   if (params?.q) query = query.ilike("title", `%${params.q}%`);
   if (params?.year) query = query.eq("year", params.year);
   if (params?.rights) query = query.ilike("music_rights", `%${params.rights}%`);
+  if (params?.published !== undefined) {
+    query = query.eq("published", params.published);
+  }
 
   const { data, error } = await query;
   if (error) throw error;
@@ -99,7 +109,7 @@ export async function listSongs(params?: {
 export async function getSong(id: string) {
   const { data, error } = await supabase
     .from("songs")
-    .select("id,title,album_id,duration,year,music_rights,cover_url,cover_file_path,preview_url,created_at")
+    .select("id,title,album_id,duration,year,music_rights,cover_url,cover_file_path,preview_url,published,created_at")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;

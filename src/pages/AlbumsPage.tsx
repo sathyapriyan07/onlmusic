@@ -20,7 +20,7 @@ export default function AlbumsPage() {
       setLoading(true);
       setErr(null);
       try {
-        const list = await listAlbums({ q: q.trim() || undefined });
+        const list = await listAlbums({ q: q.trim() || undefined, published: true });
         if (!mounted) return;
         setAlbums(list);
       } catch (e) {

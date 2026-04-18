@@ -13,6 +13,7 @@ export type Artist = {
   image_url: string | null;
   image_file_path: string | null;
   bio: string | null;
+  published: boolean;
   created_at: string;
 };
 
@@ -22,6 +23,7 @@ export type Album = {
   cover_url: string | null;
   cover_file_path: string | null;
   release_year: number | null;
+  published: boolean;
   created_at: string;
 };
 
@@ -35,6 +37,7 @@ export type Song = {
   cover_url: string | null;
   cover_file_path: string | null;
   preview_url: string | null;
+  published: boolean;
   created_at: string;
 };
 

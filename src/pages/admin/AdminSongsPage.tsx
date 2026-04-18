@@ -36,6 +36,7 @@ export default function AdminSongsPage() {
   const [coverUrl, setCoverUrl] = useState("");
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
+  const [published, setPublished] = useState(true);
   const [credits, setCredits] = useState<Credit[]>([]);
   const [saving, setSaving] = useState(false);
 
@@ -73,6 +74,7 @@ export default function AdminSongsPage() {
     setCoverUrl("");
     setCoverFile(null);
     setPreviewUrl("");
+    setPublished(true);
     setCredits([]);
   }
 
@@ -95,6 +97,7 @@ export default function AdminSongsPage() {
     setCoverUrl(s.cover_url ?? "");
     setCoverFile(null);
     setPreviewUrl(s.preview_url ?? "");
+    setPublished(s.published ?? true);
     await loadSongArtists(s.id);
   }
 
@@ -121,6 +124,7 @@ export default function AdminSongsPage() {
         cover_url: coverUrl.trim() || null,
         cover_file_path: coverUrl.trim() ? null : filePath,
         preview_url: previewUrl.trim() || null,
+        published,
       };
       if (!payload.title) throw new Error("Title is required.");
 
@@ -276,6 +280,16 @@ export default function AdminSongsPage() {
               <input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="Cover URL (optional)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500" />
               <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)} className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white file:mr-3 file:rounded-full file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:font-semibold file:text-black" />
               <input value={previewUrl} onChange={(e) => setPreviewUrl(e.target.value)} placeholder="Preview URL (30-sec iTunes audio)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500" />
+
+              <label className="flex items-center gap-3 rounded-lg border border-app bg-black/30 px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={published}
+                  onChange={(e) => setPublished(e.target.checked)}
+                  className="h-4 w-4"
+                />
+                <span className="text-sm text-white">Published (show on site)</span>
+              </label>
 
               <div className="rounded-lg border border-app bg-black/20 p-3">
                 <div className="flex items-center justify-between">

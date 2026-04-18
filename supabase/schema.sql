@@ -29,6 +29,7 @@ create table if not exists public.artists (
   image_url text,
   image_file_path text,
   bio text,
+  published boolean not null default true,
   created_at timestamptz not null default now()
 );
 
@@ -38,6 +39,7 @@ create table if not exists public.albums (
   cover_url text,
   cover_file_path text,
   release_year int,
+  published boolean not null default true,
   created_at timestamptz not null default now()
 );
 
@@ -51,6 +53,7 @@ create table if not exists public.songs (
   cover_url text,
   cover_file_path text,
   preview_url text,
+  published boolean not null default true,
   created_at timestamptz not null default now()
 );
 

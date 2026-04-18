@@ -29,9 +29,9 @@ export default function HomePage() {
         // Fetch in batches by type (by IDs). For simplicity, pull latest lists and map by id.
         // This keeps the frontend simple while remaining fast for small-to-medium catalogs.
         const [songs, albums, artists] = await Promise.all([
-          listSongs(),
-          listAlbums(),
-          listArtists(),
+          listSongs({ published: true }),
+          listAlbums({ published: true }),
+          listArtists({ published: true }),
         ]);
         if (!mounted) return;
         setSongsById(Object.fromEntries(songs.map((s) => [s.id, s])));

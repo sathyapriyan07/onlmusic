@@ -20,7 +20,7 @@ export default function ArtistsPage() {
       setLoading(true);
       setErr(null);
       try {
-        const list = await listArtists({ q: q.trim() || undefined });
+        const list = await listArtists({ q: q.trim() || undefined, published: true });
         if (!mounted) return;
         setArtists(list);
       } catch (e) {

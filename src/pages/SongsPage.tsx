@@ -28,6 +28,7 @@ export default function SongsPage() {
           q: q.trim() || undefined,
           year: year ? Number(year) : undefined,
           rights: rights.trim() || undefined,
+          published: true,
         });
 
         // Build subtitles (artists) with small N+1; acceptable for discovery scale.
