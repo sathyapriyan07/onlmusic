@@ -89,7 +89,7 @@ export default function AdminLinksPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 overflow-x-hidden [overflow-wrap:balance]">
       <Helmet>
         <title>Admin Links · ONL Music Discovery</title>
       </Helmet>
