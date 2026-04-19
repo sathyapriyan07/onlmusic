@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { ThemeProvider } from "./state/ThemeProvider";
 import AppShell from "./components/AppShell";
 import HomePage from "./pages/HomePage";
 import SongsPage from "./pages/SongsPage";
@@ -20,7 +21,8 @@ import RequireAdmin from "./components/RequireAdmin";
 
 export default function App() {
   return (
-    <AppShell>
+    <ThemeProvider>
+      <AppShell>
       <Helmet>
         <title>ONL Music Discovery</title>
         <meta
@@ -59,5 +61,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AppShell>
+    </ThemeProvider>
   );
 }
