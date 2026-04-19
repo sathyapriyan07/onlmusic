@@ -118,6 +118,27 @@ export default function AlbumDetailPage() {
         </>
       )}
 
+      {/* Credits */}
+      {artists.length > 0 && (
+        <section>
+          <h2 className="mb-4 text-lg font-bold text-[var(--text)]">Credits</h2>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {artists.map((a) => (
+              <Link
+                key={a.id}
+                to={`/artists/${a.id}`}
+                className="flex items-center gap-3 rounded-md bg-panel p-3 transition hover:bg-panel2"
+              >
+                <div className="flex-1">
+                  <div className="text-xs text-[var(--accent)]">Artist</div>
+                  <div className="font-medium text-[var(--text)]">{a.name}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Tracklist */}
       <section className="pb-8">
         <div className="mb-4 flex items-center justify-between">
