@@ -30,6 +30,12 @@ export default function AdminArtistsPage() {
   const [importResults, setImportResults] = useState<ItunesArtist[]>([]);
   const [selectedImportIds, setSelectedImportIds] = useState<Set<number>>(new Set());
   const [bulkImporting, setBulkImporting] = useState(false);
+  const [importSource, setImportSource] = useState<"itunes" | "deezer">("itunes");
+
+  async function doSearch() {
+    if (importSource === "itunes") await searchItunes(importQuery);
+    else await searchDeezer(importQuery);
+  }
 
   async function refresh() {
     setLoading(true);
@@ -142,6 +148,28 @@ export default function AdminArtistsPage() {
     }
   }
 
+  async function searchDeezer(q: string) {
+    if (!q.trim()) return;
+    setImporting(true);
+    setErr(null);
+    setImportResults([]);
+    try {
+      const term = encodeURIComponent(q.trim());
+      const resp = await fetch(`https://api.deezer.com/search/artist?q=${term}&limit=25`);
+      const data = await resp.json();
+      const results: ItunesArtist[] = (data.data ?? []).map((r: Record<string, unknown>) => ({
+        artistId: r.id as number,
+        artistName: r.name as string,
+        artistLinkUrl: r.link as string | null,
+      }));
+      setImportResults(results);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to search Deezer.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
   function importFromItunes(r: ItunesArtist) {
     const existingArtist = artists.find(
       (a) => a.name.toLowerCase() === r.artistName.toLowerCase()
@@ -210,11 +238,14 @@ export default function AdminArtistsPage() {
             <h1 className="text-lg font-semibold text-[var(--text)]">Artists</h1>
             <p className="mt-1 text-sm text-muted">Create, edit, delete artists. Upload an image or paste an external URL.</p>
           </div>
-          <div className="flex gap-2">
-            <button type="button" onClick={() => setImportModalOpen(true)} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10">
-              iTunes import
+<div className="flex gap-2">
+            <button type="button" onClick={() => { setImportSource("itunes"); setImportModalOpen(true); }} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10">
+              iTunes
             </button>
-            <button type="button" onClick={resetForm} className="rounded-2xl border border-app bg-panel2 px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10">
+            <button type="button" onClick={() => { setImportSource("deezer"); setImportModalOpen(true); }} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10">
+              Deezer
+            </button>
+            <button type="button" onClick={resetForm} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10">
               New artist
             </button>
           </div>
@@ -297,11 +328,11 @@ export default function AdminArtistsPage() {
               <input
                 value={importQuery}
                 onChange={(e) => setImportQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && searchItunes(importQuery)}
+                onKeyDown={(e) => e.key === "Enter" && doSearch()}
                 placeholder="Search artists..."
                 className="flex-1 rounded-lg border border-app bg-input px-4 py-3 text-sm text-[var(--text)] outline-none"
               />
-              <button type="button" disabled={importing} onClick={() => searchItunes(importQuery)} className="btn-primary rounded-lg px-4 py-3 text-sm font-semibold disabled:opacity-50">
+              <button type="button" disabled={importing} onClick={doSearch} className="btn-primary rounded-lg px-4 py-3 text-sm font-semibold disabled:opacity-50">
                 {importing ? "..." : "Search"}
               </button>
             </div>

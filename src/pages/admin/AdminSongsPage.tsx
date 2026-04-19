@@ -46,6 +46,7 @@ export default function AdminSongsPage() {
   const [importResults, setImportResults] = useState<ItunesResult[]>([]);
   const [selectedImportIds, setSelectedImportIds] = useState<Set<number>>(new Set());
   const [bulkImporting, setBulkImporting] = useState(false);
+  const [importSource, setImportSource] = useState<"itunes" | "musicbrainz" | "deezer">("itunes");
 
   async function refresh() {
     setLoading(true);
@@ -205,6 +206,60 @@ export default function AdminSongsPage() {
     }
   }
 
+  async function searchMusicBrainz(q: string) {
+    if (!q.trim()) return;
+    setImporting(true);
+    setErr(null);
+    try {
+      const term = encodeURIComponent(q.trim());
+      const resp = await fetch(`https://musicbrainz.org/ws/2/recording?query=${term}&type=recording&limit=25&fmt=json`, {
+        headers: { "User-Agent": "ONLMusic/1.0 (contact@onlmusic.dev)" },
+      });
+      const data = await resp.json();
+      const results: ItunesResult[] = (data.recordings ?? []).map((r: Record<string, unknown>, i: number) => ({
+        trackId: i,
+        trackName: r.title as string,
+        artistName: ((r.artist as Record<string, unknown>)?.name as string) || "Unknown",
+        collectionName: null,
+        releaseDate: null,
+        trackTimeMillis: null,
+        artworkUrl100: null,
+        previewUrl: null,
+      }));
+      setImportResults(results);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to search MusicBrainz.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  async function searchDeezer(q: string) {
+    if (!q.trim()) return;
+    setImporting(true);
+    setErr(null);
+    try {
+      const term = encodeURIComponent(q.trim());
+      const resp = await fetch(`https://api.deezer.com/search/track?q=${term}&limit=25`);
+      const data = await resp.json();
+      const results: ItunesResult[] = (data.data ?? []).map((r: Record<string, unknown>) => ({
+        trackId: r.id as number,
+        trackName: r.title as string,
+        artistName: (r.artist as Record<string, unknown>).name as string,
+        collectionName: (r.album as Record<string, unknown>)?.title as string || null,
+        releaseDate: (r.album as Record<string, unknown>)?.release_date as string || null,
+        trackTimeMillis: (r.duration as number) * 1000,
+        artworkUrl100: (r.album as Record<string, unknown>)?.cover_medium_url as string || (r.album as Record<string, unknown>)?.cover_small_url as string || null,
+        previewUrl: r.preview as string || null,
+      }));
+      setImportResults(results);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to search Deezer.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
   async function importFromItunes(r: ItunesResult) {
     const existingSong = songs.find(
       (s) => s.title.toLowerCase() === r.trackName.toLowerCase()
@@ -300,8 +355,14 @@ export default function AdminSongsPage() {
             <p className="mt-1 text-sm text-muted">CRUD songs, assign album, and add multiple artists with roles (singer, composer, lyricist…).</p>
           </div>
           <div className="flex gap-2">
-            <button type="button" onClick={() => setImportModalOpen(true)} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10">
-              iTunes import
+            <button type="button" onClick={() => { setImportSource("itunes"); setImportModalOpen(true); }} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10">
+              iTunes
+            </button>
+            <button type="button" onClick={() => { setImportSource("musicbrainz"); setImportModalOpen(true); }} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10">
+              MusicBrainz
+            </button>
+            <button type="button" onClick={() => { setImportSource("deezer"); setImportModalOpen(true); }} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10">
+              Deezer
             </button>
             <button type="button" onClick={resetForm} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10">
               New song
@@ -454,12 +515,23 @@ export default function AdminSongsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="w-full max-w-2xl rounded-2xl border border-app bg-panel p-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-[var(--text)]">iTunes Import</h2>
+              <h2 className="text-lg font-semibold text-[var(--text)]">{importSource === "itunes" ? "iTunes" : importSource === "musicbrainz" ? "MusicBrainz" : "Deezer"} Import</h2>
               <button type="button" onClick={() => setImportModalOpen(false)} className="text-muted hover:text-[var(--text)]">
                 ✕
               </button>
             </div>
-            <div className="mt-4 flex gap-2">
+            <div className="mb-4 flex gap-2 border-b border-app">
+              <button type="button" onClick={() => { setImportSource("itunes"); setImportResults([]); setImportQuery(""); }} className={`px-4 py-2 text-sm font-medium border-b-2 transition ${importSource === "itunes" ? "border-[var(--accent)] text-[var(--text)]" : "border-transparent text-muted"}`}>
+                iTunes
+              </button>
+              <button type="button" onClick={() => { setImportSource("musicbrainz"); setImportResults([]); setImportQuery(""); }} className={`px-4 py-2 text-sm font-medium border-b-2 transition ${importSource === "musicbrainz" ? "border-[var(--accent)] text-[var(--text)]" : "border-transparent text-muted"}`}>
+                MusicBrainz
+              </button>
+              <button type="button" onClick={() => { setImportSource("deezer"); setImportResults([]); setImportQuery(""); }} className={`px-4 py-2 text-sm font-medium border-b-2 transition ${importSource === "deezer" ? "border-[var(--accent)] text-[var(--text)]" : "border-transparent text-muted"}`}>
+                Deezer
+              </button>
+            </div>
+            <div className="flex gap-2">
               <input
                 value={importQuery}
                 onChange={(e) => setImportQuery(e.target.value)}
@@ -467,7 +539,7 @@ export default function AdminSongsPage() {
                 placeholder="Search songs..."
                 className="flex-1 rounded-lg border border-app bg-input px-4 py-3 text-sm text-[var(--text)] outline-none"
               />
-              <button type="button" disabled={importing} onClick={() => searchItunes(importQuery)} className="btn-primary rounded-lg px-4 py-3 text-sm font-semibold disabled:opacity-50">
+              <button type="button" disabled={importing} onClick={async () => { if (importSource === "itunes") await searchItunes(importQuery); else if (importSource === "musicbrainz") await searchMusicBrainz(importQuery); else await searchDeezer(importQuery); }} className="btn-primary rounded-lg px-4 py-3 text-sm font-semibold disabled:opacity-50">
                 {importing ? "..." : "Search"}
               </button>
             </div>
