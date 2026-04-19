@@ -4,6 +4,7 @@ import { supabase } from "../../lib/supabaseClient";
 import type { Album, Artist, Song } from "../../lib/types";
 import { listAlbums, listArtists, listSongs } from "../../lib/db";
 import { resolveImageSrc } from "../../lib/images";
+import { findSimilarArtist, findSimilarAlbum, findSimilarSong } from "../../lib/matching";
 
 const BUCKET = "song-covers";
 
@@ -204,29 +205,46 @@ export default function AdminSongsPage() {
   }
 
   async function importFromItunes(r: ItunesResult) {
-    const existingSong = songs.find(
-      (s) => s.title.toLowerCase() === r.trackName.toLowerCase()
-    );
+    const existingSong = findSimilarSong(songs, r.trackName);
     if (existingSong) {
-      if (!confirm(`"${r.trackName}" already exists. Select anyway?`)) return;
-      setEditing(existingSong);
-    } else {
-      resetForm();
-      setTitle(r.trackName);
-      if (r.releaseDate) {
-        setYear(r.releaseDate.slice(0, 4));
+      if (!confirm(`"${r.trackName}" already exists as "${existingSong.item.title}". Link to it?`)) return;
+      setEditing(existingSong.item);
+      setImportModalOpen(false);
+      return;
+    }
+
+    const existingAlbum = r.collectionName ? findSimilarAlbum(albums, r.collectionName) : null;
+    if (existingAlbum) {
+      if (!confirm(`Album "${r.collectionName}" already exists. Link to it?`)) {
+        if (!confirm(`Create new album "${r.collectionName}"?`)) return;
+      } else {
+        setAlbumId(existingAlbum.item.id);
       }
-      if (r.trackTimeMillis) {
-        const mins = Math.floor(r.trackTimeMillis / 60000);
-        const secs = Math.floor((r.trackTimeMillis % 60000) / 1000);
-        setDuration(`${mins}:${secs.toString().padStart(2, "0")}`);
-      }
-      if (r.artworkUrl100) {
-        setCoverUrl(r.artworkUrl100.replace("100x100", "600x600"));
-      }
-      if (r.previewUrl) {
-        setPreviewUrl(r.previewUrl);
-      }
+    }
+
+    const existingArtist = findSimilarArtist(artists, r.artistName);
+    if (existingArtist && !confirm(`Artist "${r.artistName}" already exists as "${existingArtist.item.name}". Link to it?`)) {
+      return;
+    }
+
+    resetForm();
+    setTitle(r.trackName);
+    if (existingArtist) {
+      setCredits([{ artist_id: existingArtist.item.id, role: "Artist" }]);
+    }
+    if (r.releaseDate) {
+      setYear(r.releaseDate.slice(0, 4));
+    }
+    if (r.trackTimeMillis) {
+      const mins = Math.floor(r.trackTimeMillis / 60000);
+      const secs = Math.floor((r.trackTimeMillis % 60000) / 1000);
+      setDuration(`${mins}:${secs.toString().padStart(2, "0")}`);
+    }
+    if (r.artworkUrl100) {
+      setCoverUrl(r.artworkUrl100.replace("100x100", "600x600"));
+    }
+    if (r.previewUrl) {
+      setPreviewUrl(r.previewUrl);
     }
     setImportModalOpen(false);
   }
