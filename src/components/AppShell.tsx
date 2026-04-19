@@ -151,7 +151,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         {/* Page Content */}
-        <div className="px-4 py-4 sm:px-6 lg:px-8">{children}</div>
+        <div className="overflow-x-hidden px-4 py-4 sm:px-6 lg:px-8">{children}</div>
       </main>
 
       {/* Mobile Bottom Nav */}

@@ -430,8 +430,8 @@ export default function AdminAlbumsPage() {
       </div>
 
       {importModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-2xl rounded-2xl border border-app bg-panel p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4 overflow-auto">
+          <div className="w-full max-w-2xl rounded-2xl border border-app bg-panel p-4 sm:p-6 my-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-[var(--text)]">iTunes Import</h2>
               <button type="button" onClick={() => setImportModalOpen(false)} className="text-muted hover:text-[var(--text)]">
@@ -499,8 +499,8 @@ export default function AdminAlbumsPage() {
       )}
 
       {assignSongsModalOpen && assigningAlbum && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-2xl rounded-2xl border border-app bg-panel p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4 overflow-auto">
+          <div className="w-full max-w-2xl rounded-2xl border border-app bg-panel p-4 sm:p-6 my-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-[var(--text)]">Assign Songs to "{assigningAlbum.title}"</h2>
               <button type="button" onClick={() => setAssignSongsModalOpen(false)} className="text-muted hover:text-[var(--text)]">
