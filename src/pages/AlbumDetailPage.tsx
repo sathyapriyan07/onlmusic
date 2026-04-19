@@ -5,7 +5,7 @@ import LinkButtons from "../components/LinkButtons";
 import ViewToggle from "../components/ViewToggle";
 import type { ViewMode } from "../components/ViewToggle";
 import { ErrorState } from "../components/States";
-import { getAlbum, getAlbumArtists, listAlbumSongs, listLinks } from "../lib/db";
+import { getAlbum, getAlbumArtists, getSongArtists, listAlbumSongs, listLinks } from "../lib/db";
 import type { Album, Link as LinkRow, Song } from "../lib/types";
 import { resolveImageSrc } from "../lib/images";
 

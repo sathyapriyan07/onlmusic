@@ -19,7 +19,7 @@ export default function SongDetailPage() {
   const [album, setAlbum] = useState<Album | null>(null);
   const [artists, setArtists] = useState<Array<{ role: string; id: string; name: string; imageUrl: string | null; imageFilePath: string | null }>>([]);
   const [links, setLinks] = useState<LinkRow[]>([]);
-  const [albumSongs, setAlbumSongs] = useState<Song[]>([]);
+  const [albumSongs, setAlbumSongs] = useState<Array<{ song: Song; artists: Array<{ id: string; name: string }> }>>([]);
   const [artistSongs, setArtistSongs] = useState<Song[]>([]);
 
   useEffect(() => {
@@ -54,7 +54,14 @@ export default function SongDetailPage() {
 
         if (s.album_id) {
           const allSongs = await listSongs();
-          setAlbumSongs(allSongs.filter((sg) => sg.album_id === s.album_id && sg.id !== s.id && sg.published).slice(0, 10));
+          const albumTracklist = allSongs.filter((sg) => sg.album_id === s.album_id && sg.id !== s.id && sg.published).slice(0, 10);
+          const withArtists = await Promise.all(
+            albumTracklist.map(async (sg) => {
+              const sas = await getSongArtists(sg.id);
+              return { song: sg, artists: sas.map((sa) => ({ id: sa.artist.id, name: sa.artist.name })) };
+            })
+          );
+          setAlbumSongs(withArtists);
         }
 
         if (songArtists.length > 0) {
@@ -185,20 +192,25 @@ export default function SongDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {albumSongs.map((s, i) => (
-                    <tr key={s.id} className="border-b border-white/5 hover:bg-white/5">
+                  {albumSongs.map((item, i) => (
+                    <tr key={item.song.id} className="border-b border-white/5 hover:bg-white/5">
                       <td className="py-2 pr-4 text-dim">{i + 1}</td>
                       <td className="py-2">
-                        <Link to={`/songs/${s.id}`} className="flex items-center gap-3 group">
+                        <Link to={`/songs/${item.song.id}`} className="flex items-center gap-3 group">
                           <img
-                            src={resolveImageSrc({ url: s.cover_url, filePath: s.cover_file_path, bucket: "song-covers" })}
+                            src={resolveImageSrc({ url: item.song.cover_url, filePath: item.song.cover_file_path, bucket: "song-covers" })}
                             alt=""
                             className="h-10 w-10 rounded shrink-0"
                           />
-                          <span className="font-medium text-[var(--text)] group-hover:text-[var(--accent)]">{s.title}</span>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-[var(--text)] group-hover:text-[var(--accent)]">{item.song.title}</span>
+                            {item.artists.length > 0 && (
+                              <span className="text-xs text-dim">{item.artists.map((a) => a.name).join(", ")}</span>
+                            )}
+                          </div>
                         </Link>
                       </td>
-                      <td className="py-2 text-dim hidden sm:table-cell">{s.duration || "—"}</td>
+                      <td className="py-2 text-dim hidden sm:table-cell">{item.song.duration || "—"}</td>
                     </tr>
                   ))}
                 </tbody>
