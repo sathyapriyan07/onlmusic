@@ -17,7 +17,7 @@ export default function AlbumDetailPage() {
   const [err, setErr] = useState<string | null>(null);
   const [album, setAlbum] = useState<Album | null>(null);
   const [artists, setArtists] = useState<Array<{ id: string; name: string }>>([]);
-  const [songs, setSongs] = useState<Song[]>([]);
+  const [songs, setSongs] = useState<Array<{ song: Song; artists: Array<{ id: string; name: string }> }>>([]);
   const [links, setLinks] = useState<LinkRow[]>([]);
   const [view, setView] = useState<ViewMode>("grid");
 
@@ -34,14 +34,20 @@ export default function AlbumDetailPage() {
           setErr("Album not found.");
           return;
         }
-        const [rels, albumSongs, albumLinks] = await Promise.all([
+        const [rels, albumSongsList, albumLinks] = await Promise.all([
           getAlbumArtists(a.id),
           listAlbumSongs(a.id),
           listLinks({ type: "album", id: a.id }),
         ]);
         if (!mounted) return;
         setArtists(rels.map((r) => ({ id: r.artist.id, name: r.artist.name })));
-        setSongs(albumSongs);
+        const withArtists = await Promise.all(
+          albumSongsList.map(async (sg) => {
+            const sas = await getSongArtists(sg.id);
+            return { song: sg, artists: sas.map((sa) => ({ id: sa.artist.id, name: sa.artist.name })) };
+          })
+        );
+        setSongs(withArtists);
         setLinks(albumLinks);
       } catch (e) {
         setErr(e instanceof Error ? e.message : "Failed to load album.");
@@ -112,15 +118,15 @@ export default function AlbumDetailPage() {
         {songs.length > 0 ? (
           view === "grid" ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {songs.map((s) => (
-                <Link key={s.id} to={`/songs/${s.id}`} className="rounded-lg border border-app bg-panel p-3 transition hover:bg-panel2">
+              {songs.map((item) => (
+                <Link key={item.song.id} to={`/songs/${item.song.id}`} className="rounded-lg border border-app bg-panel p-3 transition hover:bg-panel2">
                   <img
-                    src={resolveImageSrc({ url: s.cover_url, filePath: s.cover_file_path, bucket: "song-covers" })}
+                    src={resolveImageSrc({ url: item.song.cover_url, filePath: item.song.cover_file_path, bucket: "song-covers" })}
                     alt=""
                     className="aspect-square w-full rounded-lg object-cover"
                   />
-                  <div className="mt-2 truncate text-sm font-medium text-[var(--text)]">{s.title}</div>
-                  <div className="text-xs text-dim">{s.duration || "—"}</div>
+                  <div className="mt-2 truncate text-sm font-medium text-[var(--text)]">{item.song.title}</div>
+                  <div className="text-xs text-dim">{item.artists.map((a) => a.name).join(", ") || item.song.duration || "—"}</div>
                 </Link>
               ))}
             </div>
@@ -135,20 +141,25 @@ export default function AlbumDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {songs.map((s, i) => (
-                    <tr key={s.id} className="border-b border-app hover:bg-panel2">
+                  {songs.map((item, i) => (
+                    <tr key={item.song.id} className="border-b border-app hover:bg-panel2">
                       <td className="py-2 pr-4 text-dim">{i + 1}</td>
                       <td className="py-2">
-                        <Link to={`/songs/${s.id}`} className="flex items-center gap-3 group">
+                        <Link to={`/songs/${item.song.id}`} className="flex items-center gap-3 group">
                           <img
-                            src={resolveImageSrc({ url: s.cover_url, filePath: s.cover_file_path, bucket: "song-covers" })}
+                            src={resolveImageSrc({ url: item.song.cover_url, filePath: item.song.cover_file_path, bucket: "song-covers" })}
                             alt=""
                             className="h-10 w-10 rounded shrink-0"
                           />
-                          <span className="font-medium text-[var(--text)] group-hover:text-[var(--accent)]">{s.title}</span>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-[var(--text)] group-hover:text-[var(--accent)]">{item.song.title}</span>
+                            {item.artists.length > 0 && (
+                              <span className="text-xs text-dim">{item.artists.map((a) => a.name).join(", ")}</span>
+                            )}
+                          </div>
                         </Link>
                       </td>
-                      <td className="py-2 text-dim hidden sm:table-cell">{s.duration || "—"}</td>
+                      <td className="py-2 text-dim hidden sm:table-cell">{item.song.duration || "—"}</td>
                     </tr>
                   ))}
                 </tbody>
