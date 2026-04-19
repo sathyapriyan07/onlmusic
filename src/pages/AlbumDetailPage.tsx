@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useParams } from "react-router-dom";
 import PlayerEmbed from "../components/PlayerEmbed";
@@ -67,7 +67,7 @@ export default function AlbumDetailPage() {
   if (!album) return <ErrorState title="Not found" />;
 
   const cover = resolveImageSrc({ url: album.cover_url, filePath: album.cover_file_path, bucket: "album-covers" });
-  const youtubeLink = useMemo(() => links.find((l) => l.platform.toLowerCase().includes("youtube")) ?? null, [links]);
+  const youtubeLink = links.find((l) => l.platform.toLowerCase().includes("youtube")) ?? null;
 
   return (
     <div>
