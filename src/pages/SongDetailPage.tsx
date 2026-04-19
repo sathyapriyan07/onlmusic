@@ -17,7 +17,7 @@ export default function SongDetailPage() {
   const [err, setErr] = useState<string | null>(null);
   const [song, setSong] = useState<Song | null>(null);
   const [album, setAlbum] = useState<Album | null>(null);
-  const [artists, setArtists] = useState<Array<{ role: string; id: string; name: string }>>([]);
+  const [artists, setArtists] = useState<Array<{ role: string; id: string; name: string; imageUrl: string | null; imageFilePath: string | null }>>([]);
   const [links, setLinks] = useState<LinkRow[]>([]);
   const [albumSongs, setAlbumSongs] = useState<Song[]>([]);
   const [artistSongs, setArtistSongs] = useState<Song[]>([]);
@@ -42,7 +42,13 @@ export default function SongDetailPage() {
           s.album_id ? getAlbum(s.album_id) : Promise.resolve(null),
         ]);
         if (!mounted) return;
-        setArtists(songArtists.map((sa) => ({ role: sa.role, id: sa.artist.id, name: sa.artist.name })));
+        setArtists(songArtists.map((sa) => ({ 
+          role: sa.role, 
+          id: sa.artist.id, 
+          name: sa.artist.name,
+          imageUrl: sa.artist.image_url,
+          imageFilePath: sa.artist.image_file_path,
+        })));
         setLinks(songLinks);
         setAlbum(albumRow);
 
@@ -148,6 +154,11 @@ export default function SongDetailPage() {
                   to={`/artists/${a.id}`}
                   className="flex items-center gap-3 rounded-md bg-white/5 p-3 transition hover:bg-white/10"
                 >
+                  <img
+                    src={resolveImageSrc({ url: a.imageUrl ?? undefined, filePath: a.imageFilePath ?? undefined, bucket: "artist-images" })}
+                    alt=""
+                    className="h-12 w-12 shrink-0 rounded-full object-cover"
+                  />
                   <div className="flex-1">
                     <div className="text-xs text-[var(--accent)]">{a.role}</div>
                     <div className="font-medium text-[var(--text)]">{a.name}</div>
