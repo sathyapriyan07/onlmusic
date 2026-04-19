@@ -77,7 +77,7 @@ export default function HomePage() {
     <div className="space-y-8">
       {resolved.map((section) => (
         <section key={section.id}>
-          <h2 className="mb-4 text-xl font-bold text-white">{section.title}</h2>
+          <h2 className="mb-4 text-xl font-bold text-[var(--text)]">{section.title}</h2>
           <div className="flex gap-4 overflow-x-auto pb-2">
             {section.itemsResolved.map((item) => {
               const isSong = section.type === "songs";
@@ -120,7 +120,7 @@ export default function HomePage() {
       {resolved.length === 0 && (
         <>
           <section>
-            <h2 className="mb-4 text-xl font-bold text-white">Recently Added</h2>
+            <h2 className="mb-4 text-xl font-bold text-[var(--text)]">Recently Added</h2>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
               {Object.values(songsById)
                 .slice(0, 5)

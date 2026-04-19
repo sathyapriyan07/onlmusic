@@ -89,9 +89,9 @@ export default function ArtistDetailPage() {
             <img src={image} alt="" className="h-full w-full object-cover" />
           </div>
           <div className="flex-1">
-            <div className="text-xs font-medium uppercase tracking-wider text-white/70">Artist</div>
-            <h1 className="mt-1 text-3xl font-bold leading-tight text-white sm:text-5xl">{artist.name}</h1>
-            {artist.bio && <p className="mt-3 max-w-xl text-sm text-white/60">{artist.bio}</p>}
+            <div className="text-xs font-medium uppercase tracking-wider text-muted">Artist</div>
+            <h1 className="mt-1 text-3xl font-bold leading-tight text-[var(--text)] sm:text-5xl">{artist.name}</h1>
+            {artist.bio && <p className="mt-3 max-w-xl text-sm text-dimmer">{artist.bio}</p>}
           </div>
         </div>
       </div>
@@ -99,10 +99,10 @@ export default function ArtistDetailPage() {
       {/* Songs */}
       {songs.length > 0 && (
         <section className="pb-8">
-          <h2 className="mb-4 text-lg font-bold text-white">Songs</h2>
+          <h2 className="mb-4 text-lg font-bold text-[var(--text)]">Songs</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-white/10 text-xs uppercase text-white/50">
+              <thead className="border-b border-white/10 text-xs uppercase text-dim">
                 <tr>
                   <th className="pb-2 font-medium">#</th>
                   <th className="pb-2 font-medium">Title</th>
@@ -112,7 +112,7 @@ export default function ArtistDetailPage() {
               <tbody>
                 {songs.map((s, i) => (
                   <tr key={`${s.song.id}-${s.role}`} className="border-b border-white/5 hover:bg-white/5">
-                    <td className="py-2 pr-4 text-white/50">{i + 1}</td>
+                    <td className="py-2 pr-4 text-dim">{i + 1}</td>
                     <td className="py-2">
                       <Link to={`/songs/${s.song.id}`} className="flex items-center gap-3 group">
                         <img
@@ -124,10 +124,10 @@ export default function ArtistDetailPage() {
                           alt=""
                           className="h-10 w-10 rounded shrink-0"
                         />
-                        <span className="font-medium text-white group-hover:text-[var(--accent)]">{s.song.title}</span>
+                        <span className="font-medium text-[var(--text)] group-hover:text-[var(--accent)]">{s.song.title}</span>
                       </Link>
                     </td>
-                    <td className="py-2 text-white/50 hidden sm:table-cell">{s.role}</td>
+                    <td className="py-2 text-dim hidden sm:table-cell">{s.role}</td>
                   </tr>
                 ))}
               </tbody>
@@ -139,7 +139,7 @@ export default function ArtistDetailPage() {
       {/* Albums */}
       {albums.length > 0 && (
         <section className="pb-8">
-          <h2 className="mb-4 text-lg font-bold text-white">Albums</h2>
+          <h2 className="mb-4 text-lg font-bold text-[var(--text)]">Albums</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
             {albums.map((a) => (
               <MediaCard
@@ -161,7 +161,7 @@ export default function ArtistDetailPage() {
       {/* Links */}
       {links.length > 0 && (
         <section className="pb-8">
-          <h2 className="mb-4 text-lg font-bold text-white">Links</h2>
+          <h2 className="mb-4 text-lg font-bold text-[var(--text)]">Links</h2>
           <LinkButtons links={links} />
         </section>
       )}

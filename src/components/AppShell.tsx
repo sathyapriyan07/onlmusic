@@ -132,14 +132,17 @@ export default function AppShell({ children }: { children: ReactNode }) {
             </div>
             <div className="text-xs text-[var(--muted)]">Discovery</div>
           </div>
-          {role === "admin" && (
-            <Link
-              to="/admin"
-              className="rounded-full bg-panel2 px-4 py-2 text-sm font-medium text-[var(--text)]"
-            >
-              Admin
-            </Link>
-          )}
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            {role === "admin" && (
+              <Link
+                to="/admin"
+                className="rounded-full bg-panel2 px-4 py-2 text-sm font-medium text-[var(--text)]"
+              >
+                Admin
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Search - Mobile */}

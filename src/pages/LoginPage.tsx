@@ -45,7 +45,7 @@ export default function LoginPage() {
       </Helmet>
 
       <div className="rounded-xl bg-panel p-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-white">
+        <h1 className="text-2xl font-semibold tracking-tight text-[var(--text)]">
           {mode === "signin" ? "Sign in" : "Create account"}
         </h1>
         <p className="mt-1 text-sm text-muted">
@@ -60,14 +60,14 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
             type="email"
-            className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
+            className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500"
           />
           <input
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
             type="password"
-            className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
+            className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500"
           />
 
           {err ? <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">{err}</div> : null}
@@ -84,7 +84,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => setMode((m) => (m === "signin" ? "signup" : "signin"))}
-            className="w-full rounded-full bg-panel2 px-4 py-3 text-sm text-white hover:bg-white/10"
+            className="w-full rounded-full bg-panel2 px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10"
           >
             {mode === "signin" ? "New here? Create an account" : "Already have an account? Sign in"}
           </button>

@@ -243,14 +243,14 @@ export default function AdminSongsPage() {
       <div className="rounded-xl border border-app bg-panel p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-lg font-semibold text-white">Songs</h1>
+            <h1 className="text-lg font-semibold text-[var(--text)]">Songs</h1>
             <p className="mt-1 text-sm text-muted">CRUD songs, assign album, and add multiple artists with roles (singer, composer, lyricist…).</p>
           </div>
           <div className="flex gap-2">
-            <button type="button" onClick={() => setImportModalOpen(true)} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-white hover:bg-white/10">
+            <button type="button" onClick={() => setImportModalOpen(true)} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10">
               iTunes import
             </button>
-            <button type="button" onClick={resetForm} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-white hover:bg-white/10">
+            <button type="button" onClick={resetForm} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10">
               New song
             </button>
           </div>
@@ -260,10 +260,10 @@ export default function AdminSongsPage() {
 
         <div className="mt-5 grid gap-3 lg:grid-cols-2">
           <div className="rounded-xl border border-app bg-panel2 p-4">
-            <div className="text-sm font-semibold text-white">{editing ? "Edit song" : "Create song"}</div>
+            <div className="text-sm font-semibold text-[var(--text)]">{editing ? "Edit song" : "Create song"}</div>
             <div className="mt-3 space-y-3">
-              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500" />
-              <select value={albumId} onChange={(e) => setAlbumId(e.target.value)} className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none">
+              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500" />
+              <select value={albumId} onChange={(e) => setAlbumId(e.target.value)} className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none">
                 <option value="">No album</option>
                 {sortedAlbums.map((a) => (
                   <option key={a.id} value={a.id}>
@@ -272,14 +272,14 @@ export default function AdminSongsPage() {
                 ))}
               </select>
               <div className="grid grid-cols-2 gap-2">
-                <input value={year} onChange={(e) => setYear(e.target.value)} placeholder="Year" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500" />
-                <input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="Duration (e.g. 3:42)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500" />
+                <input value={year} onChange={(e) => setYear(e.target.value)} placeholder="Year" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500" />
+                <input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="Duration (e.g. 3:42)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500" />
               </div>
-              <input value={rights} onChange={(e) => setRights(e.target.value)} placeholder="Music rights (optional)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500" />
+              <input value={rights} onChange={(e) => setRights(e.target.value)} placeholder="Music rights (optional)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500" />
 
-              <input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="Cover URL (optional)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500" />
-              <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)} className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white file:mr-3 file:rounded-full file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:font-semibold file:text-black" />
-              <input value={previewUrl} onChange={(e) => setPreviewUrl(e.target.value)} placeholder="Preview URL (30-sec iTunes audio)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500" />
+              <input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="Cover URL (optional)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500" />
+              <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)} className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] file:mr-3 file:rounded-full file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:font-semibold file:text-black" />
+              <input value={previewUrl} onChange={(e) => setPreviewUrl(e.target.value)} placeholder="Preview URL (30-sec iTunes audio)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500" />
 
               <label className="flex items-center gap-3 rounded-lg border border-app bg-black/30 px-4 py-3">
                 <input
@@ -288,7 +288,7 @@ export default function AdminSongsPage() {
                   onChange={(e) => setPublished(e.target.checked)}
                   className="h-4 w-4"
                 />
-                <span className="text-sm text-white">Published (show on site)</span>
+                <span className="text-sm text-[var(--text)]">Published (show on site)</span>
               </label>
 
               <div className="rounded-lg border border-app bg-black/20 p-3">
@@ -297,7 +297,7 @@ export default function AdminSongsPage() {
                   <button
                     type="button"
                     onClick={() => setCredits((prev) => [...prev, { artist_id: "", role: "" }])}
-                        className="btn-secondary rounded-xl px-3 py-2 text-xs text-white hover:bg-white/10"
+                        className="btn-secondary rounded-xl px-3 py-2 text-xs text-[var(--text)] hover:bg-white/10"
                   >
                     Add credit
                   </button>
@@ -311,7 +311,7 @@ export default function AdminSongsPage() {
                           const v = e.target.value;
                           setCredits((prev) => prev.map((x, i) => (i === idx ? { ...x, artist_id: v } : x)));
                         }}
-                        className="rounded-lg border border-app bg-black/30 px-3 py-2 text-sm text-white outline-none"
+                        className="rounded-lg border border-app bg-black/30 px-3 py-2 text-sm text-[var(--text)] outline-none"
                       >
                         <option value="">Select artist</option>
                         {sortedArtists.map((a) => (
@@ -327,7 +327,7 @@ export default function AdminSongsPage() {
                           setCredits((prev) => prev.map((x, i) => (i === idx ? { ...x, role: v } : x)));
                         }}
                         placeholder="Role (singer/composer/lyricist...)"
-                        className="rounded-lg border border-app bg-black/30 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-500"
+                        className="rounded-lg border border-app bg-black/30 px-3 py-2 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500"
                       />
                       <button
                         type="button"
@@ -347,7 +347,7 @@ export default function AdminSongsPage() {
                   {saving ? "Saving…" : "Save"}
                 </button>
                 {editing ? (
-                  <button type="button" onClick={resetForm} className="rounded-full bg-black/30 px-4 py-3 text-sm text-white hover:bg-black/40">
+                  <button type="button" onClick={resetForm} className="rounded-full bg-black/30 px-4 py-3 text-sm text-[var(--text)] hover:bg-black/40">
                     Cancel
                   </button>
                 ) : null}
@@ -356,7 +356,7 @@ export default function AdminSongsPage() {
           </div>
 
           <div className="rounded-xl border border-app bg-panel2 p-4">
-            <div className="text-sm font-semibold text-white">Existing</div>
+            <div className="text-sm font-semibold text-[var(--text)]">Existing</div>
             {loading ? (
               <div className="mt-3 text-sm text-muted">Loading…</div>
             ) : (
@@ -374,14 +374,14 @@ export default function AdminSongsPage() {
                         ) : null}
                       </div>
                       <div className="min-w-0">
-                        <div className="truncate text-sm font-medium text-white">{s.title}</div>
+                        <div className="truncate text-sm font-medium text-[var(--text)]">{s.title}</div>
                         <div className="truncate text-xs text-muted">
                           {[s.year ? String(s.year) : "", s.duration ?? ""].filter(Boolean).join(" · ") || "—"}
                         </div>
                       </div>
                     </div>
                     <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-                      <button type="button" onClick={() => startEdit(s)} className="btn-secondary rounded-xl px-3 py-2 text-xs text-white hover:bg-white/10">
+                      <button type="button" onClick={() => startEdit(s)} className="btn-secondary rounded-xl px-3 py-2 text-xs text-[var(--text)] hover:bg-white/10">
                         Edit
                       </button>
                       <button type="button" onClick={() => del(s.id)} className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200 hover:bg-red-500/20">
@@ -401,8 +401,8 @@ export default function AdminSongsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="w-full max-w-lg rounded-2xl border border-app bg-panel p-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">iTunes Import</h2>
-              <button type="button" onClick={() => setImportModalOpen(false)} className="text-muted hover:text-white">
+              <h2 className="text-lg font-semibold text-[var(--text)]">iTunes Import</h2>
+              <button type="button" onClick={() => setImportModalOpen(false)} className="text-muted hover:text-[var(--text)]">
                 ✕
               </button>
             </div>
@@ -412,7 +412,7 @@ export default function AdminSongsPage() {
                 onChange={(e) => setImportQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && searchItunes(importQuery)}
                 placeholder="Search songs..."
-                className="flex-1 rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-white outline-none placeholder:text-zinc-500"
+                className="flex-1 rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500"
               />
               <button type="button" disabled={importing} onClick={() => searchItunes(importQuery)} className="btn-primary rounded-lg px-4 py-3 text-sm font-semibold disabled:opacity-50">
                 {importing ? "..." : "Search"}
@@ -425,7 +425,7 @@ export default function AdminSongsPage() {
                     {r.artworkUrl100 && <img src={r.artworkUrl100} alt="" className="h-full w-full object-cover" />}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium text-white">{r.trackName}</div>
+                    <div className="truncate text-sm font-medium text-[var(--text)]">{r.trackName}</div>
                     <div className="truncate text-xs text-muted">{r.artistName}</div>
                   </div>
                   <button type="button" onClick={() => importFromItunes(r)} className="shrink-0 btn-primary rounded-lg px-3 py-2 text-xs font-semibold">

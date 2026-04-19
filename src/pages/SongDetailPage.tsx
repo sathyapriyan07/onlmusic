@@ -111,19 +111,19 @@ export default function SongDetailPage() {
             <img src={cover} alt="" className="h-full w-full object-cover" />
           </div>
           <div className="flex-1 text-center sm:text-left">
-            <div className="text-xs font-medium uppercase tracking-wider text-white/70">Song</div>
-            <h1 className="mt-1 text-3xl font-bold leading-tight text-white sm:text-5xl sm:text-left">{song.title}</h1>
+            <div className="text-xs font-medium uppercase tracking-wider text-muted">Song</div>
+            <h1 className="mt-1 text-3xl font-bold leading-tight text-[var(--text)] sm:text-5xl sm:text-left">{song.title}</h1>
             {artists.length > 0 && (
-              <div className="mt-2 flex flex-wrap items-center justify-center gap-x-2 text-sm text-white/70 sm:justify-start">
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-x-2 text-sm text-muted sm:justify-start">
                 {artists.map((a, i) => (
-                  <Link key={a.id} to={`/artists/${a.id}`} className="hover:text-white hover:underline">
+                  <Link key={a.id} to={`/artists/${a.id}`} className="hover:text-[var(--text)] hover:underline">
                     {a.name}
                     {i < artists.length - 1 ? ", " : ""}
                   </Link>
                 ))}
               </div>
             )}
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs text-white/50 sm:justify-start">
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs text-dim sm:justify-start">
               {song.year && <span>{song.year}</span>}
               {song.year && song.duration && <span>·</span>}
               {song.duration && <span>{song.duration}</span>}
@@ -140,7 +140,7 @@ export default function SongDetailPage() {
         {/* Credits */}
         {artists.length > 0 && (
           <section>
-            <h2 className="mb-4 text-lg font-bold text-white">Credits</h2>
+            <h2 className="mb-4 text-lg font-bold text-[var(--text)]">Credits</h2>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {artists.map((a) => (
                 <Link
@@ -150,7 +150,7 @@ export default function SongDetailPage() {
                 >
                   <div className="flex-1">
                     <div className="text-xs text-[var(--accent)]">{a.role}</div>
-                    <div className="font-medium text-white">{a.name}</div>
+                    <div className="font-medium text-[var(--text)]">{a.name}</div>
                   </div>
                 </Link>
               ))}
@@ -161,12 +161,12 @@ export default function SongDetailPage() {
         {/* More from album - Table like Spotify */}
         {albumSongs.length > 0 && (
           <section>
-            <Link to={album ? `/albums/${album.id}` : "#"} className="mb-4 block text-lg font-bold text-white hover:underline">
+            <Link to={album ? `/albums/${album.id}` : "#"} className="mb-4 block text-lg font-bold text-[var(--text)] hover:underline">
               More from {album?.title}
             </Link>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="border-b border-white/10 text-xs uppercase text-white/50">
+                <thead className="border-b border-white/10 text-xs uppercase text-dim">
                   <tr>
                     <th className="pb-2 font-medium">#</th>
                     <th className="pb-2 font-medium">Title</th>
@@ -176,7 +176,7 @@ export default function SongDetailPage() {
                 <tbody>
                   {albumSongs.map((s, i) => (
                     <tr key={s.id} className="border-b border-white/5 hover:bg-white/5">
-                      <td className="py-2 pr-4 text-white/50">{i + 1}</td>
+                      <td className="py-2 pr-4 text-dim">{i + 1}</td>
                       <td className="py-2">
                         <Link to={`/songs/${s.id}`} className="flex items-center gap-3 group">
                           <img
@@ -184,10 +184,10 @@ export default function SongDetailPage() {
                             alt=""
                             className="h-10 w-10 rounded shrink-0"
                           />
-                          <span className="font-medium text-white group-hover:text-[var(--accent)]">{s.title}</span>
+                          <span className="font-medium text-[var(--text)] group-hover:text-[var(--accent)]">{s.title}</span>
                         </Link>
                       </td>
-                      <td className="py-2 text-white/50 hidden sm:table-cell">{s.duration || "—"}</td>
+                      <td className="py-2 text-dim hidden sm:table-cell">{s.duration || "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -199,7 +199,7 @@ export default function SongDetailPage() {
         {/* More from artist */}
         {artistSongs.length > 0 && (
           <section>
-            <h2 className="mb-4 text-lg font-bold text-white">More by {artists[0]?.name}</h2>
+            <h2 className="mb-4 text-lg font-bold text-[var(--text)]">More by {artists[0]?.name}</h2>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {artistSongs.map((s) => (
                 <Link
@@ -215,8 +215,8 @@ export default function SongDetailPage() {
                     />
                   </div>
                   <div className="mt-2">
-                    <div className="line-clamp-1 text-sm font-medium text-white group-hover:text-[var(--accent)]">{s.title}</div>
-                    {s.duration && <div className="text-xs text-white/50">{s.duration}</div>}
+                    <div className="line-clamp-1 text-sm font-medium text-[var(--text)] group-hover:text-[var(--accent)]">{s.title}</div>
+                    {s.duration && <div className="text-xs text-dim">{s.duration}</div>}
                   </div>
                 </Link>
               ))}
@@ -227,7 +227,7 @@ export default function SongDetailPage() {
         {/* Links */}
         {links.length > 0 && (
           <section>
-            <h2 className="mb-4 text-lg font-bold text-white">Links</h2>
+            <h2 className="mb-4 text-lg font-bold text-[var(--text)]">Links</h2>
             <LinkButtons links={links} />
           </section>
         )}

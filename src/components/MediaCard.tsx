@@ -46,8 +46,8 @@ export default function MediaCard({
       </div>
 
       <div className="mt-2 px-1">
-        <div className="line-clamp-1 text-sm font-medium text-white">{title}</div>
-        {subtitle ? <div className="line-clamp-1 text-xs text-white/50">{subtitle}</div> : null}
+        <div className="line-clamp-1 text-sm font-medium text-[var(--text)]">{title}</div>
+        {subtitle ? <div className="line-clamp-1 text-xs text-dim">{subtitle}</div> : null}
       </div>
     </Link>
   );

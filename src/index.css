@@ -16,9 +16,11 @@
   --bg: #121212;
   --panel: #181818;
   --panel2: #242424;
-  --text: rgba(255, 255, 255, 0.92);
-  --muted: rgba(255, 255, 255, 0.62);
-  --border: rgba(255, 255, 255, 0.08);
+  --text: rgb(255 255 255 / 0.92);
+  --muted: rgb(255 255 255 / 0.62);
+  --border: rgb(255 255 255 / 0.08);
+  --text-dim: rgb(255 255 255 / 0.5);
+  --text-dimmer: rgb(255 255 255 / 0.4);
   --accent: #1db954;
   --accent2: #1ed760;
 }
@@ -30,6 +32,8 @@
   --text: #171717;
   --muted: #525252;
   --border: rgba(0, 0, 0, 0.08);
+  --text-dim: rgb(23 23 23 / 0.5);
+  --text-dimmer: rgb(23 23 23 / 0.4);
   --accent: #1db954;
   --accent2: #1ed760;
 }
@@ -105,5 +109,11 @@ body {
   }
   .text-app-muted {
     color: var(--muted);
+  }
+  .text-dim {
+    color: var(--text-dim);
+  }
+  .text-dimmer {
+    color: var(--text-dimmer);
   }
 }
