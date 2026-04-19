@@ -1,0 +1,16 @@
+{
+  "name": "ONL Music",
+  "short_name": "ONL Music",
+  "description": "Online music discovery and streaming",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#1db954",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
