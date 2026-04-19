@@ -191,8 +191,9 @@ export default function SongDetailPage() {
               <table className="w-full text-left text-sm">
                 <thead className="border-b border-white/10 text-xs uppercase text-dim">
                   <tr>
-                    <th className="pb-2 font-medium">#</th>
+                    <th className="pb-2 font-medium w-10">#</th>
                     <th className="pb-2 font-medium">Title</th>
+                    <th className="pb-2 font-medium w-10 hidden sm:table-cell"></th>
                     <th className="pb-2 font-medium hidden sm:table-cell">Duration</th>
                   </tr>
                 </thead>
@@ -214,6 +215,25 @@ export default function SongDetailPage() {
                             )}
                           </div>
                         </Link>
+                      </td>
+                      <td className="py-2 hidden sm:table-cell">
+                        {item.song.preview_url && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const audio = new Audio(item.song.preview_url!);
+                              audio.play();
+                            }}
+                            className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--accent)] text-black hover:opacity-90"
+                            title="Play preview"
+                          >
+                            <svg className="h-3 w-3 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
+                          </button>
+                        )}
                       </td>
                       <td className="py-2 text-dim hidden sm:table-cell">{item.song.duration || "—"}</td>
                     </tr>
