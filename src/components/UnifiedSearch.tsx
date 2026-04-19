@@ -74,16 +74,18 @@ export default function UnifiedSearch() {
     );
   };
 
-const getImage = (r: Result) => {
-  if (r.type === "song") return resolveImageSrc({ url: r.image, bucket: "song-covers" });
-  if (r.type === "album") return resolveImageSrc({ url: r.image, bucket: "album-covers" });
-  return resolveImageSrc({ url: r.image, bucket: "artist-images" });
-};
+  const getImage = (r: Result) => {
+    if (r.type === "song") return resolveImageSrc({ url: r.image, bucket: "song-covers" });
+    if (r.type === "album") return resolveImageSrc({ url: r.image, bucket: "album-covers" });
+    return resolveImageSrc({ url: r.image, bucket: "artist-images" });
+  };
+
+  const getTypeColor = (_type: string) => "text-muted";
 
   return (
     <div className="relative">
-      <label className="flex items-center gap-3 rounded-full border border-subtle bg-surface px-4 py-3 transition focus-within:border-pink-500">
-        <Search className="h-4 w-4 text-secondary" />
+      <label className="flex items-center gap-3 rounded-full border border-app bg-panel px-4 py-3">
+        <Search className="h-4 w-4 text-muted" />
         <input
           ref={inputRef}
           value={query}
@@ -92,12 +94,12 @@ const getImage = (r: Result) => {
           onBlur={() => setTimeout(() => setOpen(false), 200)}
           onKeyDown={handleKeyDown}
           placeholder="Search songs, albums, artists…"
-          className="w-full bg-transparent text-sm text-primary outline-none placeholder:text-tertiary"
+          className="w-full bg-transparent text-sm text-[var(--text)] outline-none placeholder:text-[var(--muted)]"
         />
       </label>
 
       {open && results.length > 0 && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-80 overflow-auto rounded-2xl border border-subtle bg-elevated shadow-soft">
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-80 overflow-auto rounded-2xl border border-app bg-panel">
           {results.map((r, idx) => {
             const path = r.type === "song" ? "/songs" : r.type === "album" ? "/albums" : "/artists";
             return (
@@ -106,16 +108,16 @@ const getImage = (r: Result) => {
                 to={`${path}/${r.id}`}
                 className={clsx(
                   "flex items-center gap-3 px-4 py-3 transition",
-                  idx === selectedIdx ? "bg-surface" : "hover:bg-surface",
+                  idx === selectedIdx ? "bg-panel2" : "hover:bg-panel2",
                 )}
               >
-                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-surface">
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-panel2">
                   {r.image && <img src={getImage(r)} alt="" className="h-full w-full object-cover" />}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm text-primary">{highlightMatch(r.title)}</div>
-                  <div className="flex items-center gap-2 text-xs text-tertiary">
-                    <span className="capitalize">{r.type}</span>
+                  <div className="truncate text-sm text-[var(--text)]">{highlightMatch(r.title)}</div>
+                  <div className="flex items-center gap-2 text-xs text-muted">
+                    <span className={getTypeColor(r.type)}>{r.type}</span>
                     {r.subtitle && <span>· {r.subtitle}</span>}
                   </div>
                 </div>

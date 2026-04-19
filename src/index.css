@@ -1,154 +1,122 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --font-size-xs: 0.65rem;
+  --font-size-sm: 0.7rem;
+  --font-size-base: 0.75rem;
+  --font-size-lg: 0.8rem;
+  --font-size-xl: 0.875rem;
+  --font-size-2xl: 0.95rem;
+  --font-size-3xl: 1.1rem;
+}
 
 :root,
 :root.dark {
-  --bg-primary: #0b0b0f;
-  --bg-elevated: #15151c;
-  --bg-surface: #1c1c26;
-  --bg-card: #20202a;
-  --text-primary: #ffffff;
-  --text-secondary: #a1a1aa;
-  --text-tertiary: #71717a;
-  --accent: #ec4899;
-  --accent-glow: rgba(236, 72, 153, 0.4);
-  --border: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(255, 255, 255, 0.15);
+  --bg: #121212;
+  --panel: #181818;
+  --panel2: #242424;
+  --text: rgb(255 255 255 / 0.92);
+  --muted: rgb(255 255 255 / 0.62);
+  --border: rgb(255 255 255 / 0.08);
+  --text-dim: rgb(255 255 255 / 0.5);
+  --text-dimmer: rgb(255 255 255 / 0.4);
+  --accent: #1db954;
+  --accent2: #1ed760;
 }
 
 :root.light {
-  --bg-primary: #fafafa;
-  --bg-elevated: #ffffff;
-  --bg-surface: #f4f4f5;
-  --bg-card: #e4e4e7;
-  --text-primary: #18181b;
-  --text-secondary: #52525b;
-  --text-tertiary: #a1a1aa;
-  --accent: #ec4899;
-  --accent-glow: rgba(236, 72, 153, 0.2);
+  --bg: #f5f5f5;
+  --panel: #ffffff;
+  --panel2: #e5e5e5;
+  --text: #171717;
+  --muted: #525252;
   --border: rgba(0, 0, 0, 0.08);
-  --border-hover: rgba(0, 0, 0, 0.15);
+  --text-dim: rgb(23 23 23 / 0.5);
+  --text-dimmer: rgb(23 23 23 / 0.4);
+  --accent: #1db954;
+  --accent2: #1ed760;
 }
 
 html {
-  font-size: 14px;
+  font-size: 13px;
 }
 
 html,
 body {
   height: 100%;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-family: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    "Nunito",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    "Apple Color Emoji",
+    "Segoe UI Emoji";
   text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
 }
 
 * {
-  scrollbar-width: thin;
-  scrollbar-color: var(--bg-card) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }
 
-::selection {
-  background: var(--accent);
-  color: white;
+:root.light * {
+  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
 }
 
 @layer utilities {
-  .bg-premium {
-    background: var(--bg-primary);
+  .bg-app {
+    background: var(--bg);
   }
-  .bg-elevated {
-    background: var(--bg-elevated);
+  .bg-panel {
+    background: var(--panel);
   }
-  .bg-surface {
-    background: var(--bg-surface);
+  .bg-panel2 {
+    background: var(--panel2);
   }
-  .bg-card {
-    background: var(--bg-card);
+  .text-muted {
+    color: var(--muted);
   }
-  .text-primary {
-    color: var(--text-primary);
-  }
-  .text-secondary {
-    color: var(--text-secondary);
-  }
-  .text-tertiary {
-    color: var(--text-tertiary);
-  }
-  .border-subtle {
+  .border-app {
     border-color: var(--border);
   }
-  .hover\:border-subtle:hover {
-    border-color: var(--border-hover);
-  }
-  .shadow-glow {
-    box-shadow: 0 0 40px var(--accent-glow);
+  .ring-app {
+    --tw-ring-color: var(--border);
   }
   .shadow-card {
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   }
-  .shadow-soft {
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  .chip {
+    border: 1px solid var(--border);
+    background: var(--panel2);
   }
-  .glass {
-    backdrop-filter: blur(20px);
-    background: rgba(21, 21, 28, 0.8);
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
   }
-  .text-gradient {
-    background: linear-gradient(135deg, #ec4899, #8b5cf6);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .btn-secondary {
+    border: 1px solid var(--border);
+    background: var(--panel2);
   }
-  .bg-gradient-hero {
-    background: linear-gradient(180deg, transparent 0%, var(--bg-primary) 100%);
+  .text-app {
+    color: var(--text);
   }
-  .animate-fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
+  .text-app-muted {
+    color: var(--muted);
   }
-  .animate-slide-up {
-    animation: slideUp 0.5s ease-out forwards;
+  .text-dim {
+    color: var(--text-dim);
   }
-  .animate-scale-in {
-    animation: scaleIn 0.3s ease-out forwards;
+  .text-dimmer {
+    color: var(--text-dimmer);
   }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px var(--accent-glow); }
-  50% { box-shadow: 0 0 40px var(--accent-glow); }
-}
-
-.scroll-snap-x {
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-}
-
-.scroll-snap-center {
-  scroll-snap-align: center;
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+  .bg-input {
+    background: var(--panel2);
+  }
 }

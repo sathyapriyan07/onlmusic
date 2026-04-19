@@ -33,7 +33,6 @@ export default function App() {
 
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/discover" element={<HomePage />} />
         <Route path="/songs" element={<SongsPage />} />
         <Route path="/songs/:id" element={<SongDetailPage />} />
         <Route path="/albums" element={<AlbumsPage />} />
