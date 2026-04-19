@@ -56,12 +56,15 @@ export type AlbumArtist = {
 
 export type LinkEntityType = "song" | "album" | "artist";
 
+export type LinkCategory = "official" | "live" | "lyrics" | "covers" | "other";
+
 export type Link = {
   id: number;
   entity_type: LinkEntityType;
   entity_id: string;
   platform: string;
   url: string;
+  category: LinkCategory | null;
   created_at: string;
 };
 

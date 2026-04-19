@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "../../lib/supabaseClient";
-import type { Album, Artist, Link, LinkEntityType, Song } from "../../lib/types";
+import type { Album, Artist, Link, LinkCategory, LinkEntityType, Song } from "../../lib/types";
 import { listAlbums, listArtists, listSongs } from "../../lib/db";
 
 type EntityOption = { type: LinkEntityType; id: string; label: string };
@@ -18,6 +18,7 @@ export default function AdminLinksPage() {
   const [entityId, setEntityId] = useState("");
   const [platform, setPlatform] = useState("YouTube");
   const [url, setUrl] = useState("");
+  const [category, setCategory] = useState<LinkCategory>("official");
   const [saving, setSaving] = useState(false);
 
   async function refresh() {
@@ -25,7 +26,7 @@ export default function AdminLinksPage() {
     setErr(null);
     try {
       const [l, s, al, ar] = await Promise.all([
-        supabase.from("links").select("id,entity_type,entity_id,platform,url,created_at").order("id", { ascending: false }),
+        supabase.from("links").select("id,entity_type,entity_id,platform,url,category,created_at").order("id", { ascending: false }),
         listSongs(),
         listAlbums(),
         listArtists(),
@@ -65,6 +66,7 @@ export default function AdminLinksPage() {
         entity_id: entityId,
         platform: platform.trim(),
         url: url.trim(),
+        category,
       });
       if (error) throw error;
       setUrl("");
@@ -119,8 +121,16 @@ export default function AdminLinksPage() {
                 ))}
               </select>
 
-              <input value={platform} onChange={(e) => setPlatform(e.target.value)} placeholder="Platform (YouTube, Spotify…)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500" />
-              <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="URL" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500" />
+              <input value={platform} onChange={(e) => setPlatform(e.target.value)} placeholder="Platform (YouTube, Spotify…)" className="w-full rounded-lg border border-app bg-input px-4 py-3 text-sm text-[var(--text)] outline-none" />
+              <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="URL" className="w-full rounded-lg border border-app bg-input px-4 py-3 text-sm text-[var(--text)] outline-none" />
+              
+              <select value={category} onChange={(e) => setCategory(e.target.value as LinkCategory)} className="w-full rounded-lg border border-app bg-input px-4 py-3 text-sm text-[var(--text)] outline-none">
+                <option value="official">Official</option>
+                <option value="live">Live Performance</option>
+                <option value="lyrics">Lyric Video</option>
+                <option value="covers">Covers</option>
+                <option value="other">Other</option>
+              </select>
 
               <button type="button" disabled={saving} onClick={save} className="btn-primary rounded-full px-4 py-3 text-sm font-semibold disabled:opacity-50">
                 {saving ? "Saving…" : "Create"}
