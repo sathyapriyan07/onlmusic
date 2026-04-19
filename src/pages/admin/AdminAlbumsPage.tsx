@@ -4,7 +4,6 @@ import { supabase } from "../../lib/supabaseClient";
 import type { Album, Artist } from "../../lib/types";
 import { listAlbums, listArtists } from "../../lib/db";
 import { resolveImageSrc } from "../../lib/images";
-import { findSimilarArtist, findSimilarAlbum } from "../../lib/matching";
 
 const BUCKET = "album-covers";
 
@@ -172,30 +171,21 @@ export default function AdminAlbumsPage() {
   }
 
   function importFromItunes(r: ItunesCollection) {
-    const existingAlbum = findSimilarAlbum(albums, r.collectionName);
+    const existingAlbum = albums.find(
+      (a) => a.title.toLowerCase() === r.collectionName.toLowerCase()
+    );
     if (existingAlbum) {
-      if (!confirm(`Album "${r.collectionName}" already exists as "${existingAlbum.item.title}". Link to it?`)) return;
-      startEdit(existingAlbum.item);
-      setImportModalOpen(false);
-      return;
-    }
-
-    const existingArtist = findSimilarArtist(artists, r.artistName);
-    if (existingArtist) {
-      if (!confirm(`Artist "${r.artistName}" already exists as "${existingArtist.item.name}". Link to it?`)) return;
-      setArtistIds([existingArtist.item.id]);
-    }
-
-    resetForm();
-    setTitle(r.collectionName);
-    if (existingArtist) {
-      setArtistIds([existingArtist.item.id]);
-    }
-    if (r.releaseDate) {
-      setReleaseYear(r.releaseDate.slice(0, 4));
-    }
-    if (r.artworkUrl100) {
-      setCoverUrl(r.artworkUrl100.replace("100x100", "600x600"));
+      if (!confirm(`"${r.collectionName}" already exists. Select anyway?`)) return;
+      startEdit(existingAlbum);
+    } else {
+      resetForm();
+      setTitle(r.collectionName);
+      if (r.releaseDate) {
+        setReleaseYear(r.releaseDate.slice(0, 4));
+      }
+      if (r.artworkUrl100) {
+        setCoverUrl(r.artworkUrl100.replace("100x100", "600x600"));
+      }
     }
     setImportModalOpen(false);
   }

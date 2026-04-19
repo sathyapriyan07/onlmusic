@@ -4,7 +4,6 @@ import { supabase } from "../../lib/supabaseClient";
 import type { Artist } from "../../lib/types";
 import { listArtists } from "../../lib/db";
 import { resolveImageSrc } from "../../lib/images";
-import { findSimilarArtist } from "../../lib/matching";
 
 const BUCKET = "artist-images";
 
@@ -142,10 +141,12 @@ export default function AdminArtistsPage() {
   }
 
   function importFromItunes(r: ItunesArtist) {
-    const existingArtist = findSimilarArtist(artists, r.artistName);
+    const existingArtist = artists.find(
+      (a) => a.name.toLowerCase() === r.artistName.toLowerCase()
+    );
     if (existingArtist) {
-      if (!confirm(`Artist "${r.artistName}" already exists as "${existingArtist.item.name}". Link to it?`)) return;
-      startEdit(existingArtist.item);
+      if (!confirm(`"${r.artistName}" already exists. Select anyway?`)) return;
+      startEdit(existingArtist);
     } else {
       resetForm();
       setName(r.artistName);
