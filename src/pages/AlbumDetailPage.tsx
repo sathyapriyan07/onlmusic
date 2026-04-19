@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useParams } from "react-router-dom";
+import PlayerEmbed from "../components/PlayerEmbed";
 import LinkButtons from "../components/LinkButtons";
 import ViewToggle from "../components/ViewToggle";
 import type { ViewMode } from "../components/ViewToggle";
@@ -66,6 +67,7 @@ export default function AlbumDetailPage() {
   if (!album) return <ErrorState title="Not found" />;
 
   const cover = resolveImageSrc({ url: album.cover_url, filePath: album.cover_file_path, bucket: "album-covers" });
+  const youtubeLink = useMemo(() => links.find((l) => l.platform.toLowerCase().includes("youtube")) ?? null, [links]);
 
   return (
     <div>
@@ -108,6 +110,13 @@ export default function AlbumDetailPage() {
           </div>
         </div>
       </div>
+
+      {youtubeLink && (
+        <>
+          <PlayerEmbed url={youtubeLink.url} />
+          {youtubeLink.title && <div className="mt-2 text-sm text-dim">{youtubeLink.title}</div>}
+        </>
+      )}
 
       {/* Tracklist */}
       <section className="pb-8">
