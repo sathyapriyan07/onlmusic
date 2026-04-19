@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "../../lib/supabaseClient";
-import type { Album, Artist } from "../../lib/types";
-import { listAlbums, listArtists } from "../../lib/db";
+import type { Album, Artist, Song } from "../../lib/types";
+import { listAlbums, listArtists, listSongs } from "../../lib/db";
 import { resolveImageSrc } from "../../lib/images";
 
 const BUCKET = "album-covers";
@@ -28,6 +28,7 @@ export default function AdminAlbumsPage() {
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [artistIds, setArtistIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [allSongs, setAllSongs] = useState<Song[]>([]);
 
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [importQuery, setImportQuery] = useState("");
@@ -36,6 +37,11 @@ export default function AdminAlbumsPage() {
   const [selectedImportIds, setSelectedImportIds] = useState<Set<number>>(new Set());
   const [bulkImporting, setBulkImporting] = useState(false);
   const [importSource, setImportSource] = useState<"itunes" | "deezer">("itunes");
+
+  const [assignSongsModalOpen, setAssignSongsModalOpen] = useState(false);
+  const [assigningAlbum, setAssigningAlbum] = useState<Album | null>(null);
+  const [selectedSongIds, setSelectedSongIds] = useState<Set<string>>(new Set());
+  const [assigningSongs, setAssigningSongs] = useState(false);
 
   async function doSearch() {
     if (importSource === "itunes") await searchItunes(importQuery);
@@ -46,9 +52,10 @@ export default function AdminAlbumsPage() {
     setLoading(true);
     setErr(null);
     try {
-      const [a, ar] = await Promise.all([listAlbums(), listArtists()]);
+      const [a, ar, s] = await Promise.all([listAlbums(), listArtists(), listSongs()]);
       setAlbums(a);
       setArtists(ar);
+      setAllSongs(s);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Failed to load albums.");
     } finally {
@@ -153,6 +160,47 @@ export default function AdminAlbumsPage() {
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Failed to delete album.");
     }
+  }
+
+  function openAssignSongs(album: Album) {
+    setAssigningAlbum(album);
+    setSelectedSongIds(new Set());
+    setAssignSongsModalOpen(true);
+  }
+
+  async function assignSongsToAlbum() {
+    if (!assigningAlbum || selectedSongIds.size === 0) return;
+    setAssigningSongs(true);
+    setErr(null);
+    try {
+      for (const songId of selectedSongIds) {
+        const { error } = await supabase.from("songs").update({ album_id: assigningAlbum.id }).eq("id", songId);
+        if (error) throw error;
+      }
+      setAssignSongsModalOpen(false);
+      setAssigningAlbum(null);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to assign songs.");
+    } finally {
+      setAssigningSongs(false);
+    }
+  }
+
+  function toggleSongSelection(id: string) {
+    setSelectedSongIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function selectAllSongs(songList: Song[]) {
+    setSelectedSongIds(new Set(songList.map((s) => s.id)));
+  }
+
+  function deselectAllSongs() {
+    setSelectedSongIds(new Set());
   }
 
   async function searchItunes(q: string) {
@@ -362,6 +410,9 @@ export default function AdminAlbumsPage() {
                       </div>
                     </div>
                     <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+                      <button type="button" onClick={() => openAssignSongs(a)} className="rounded-xl border border-app bg-panel2 px-3 py-2 text-xs text-[var(--text)] hover:bg-white/10">
+                        + Songs
+                      </button>
                       <button type="button" onClick={() => startEdit(a)} className="rounded-xl border border-app bg-panel2 px-3 py-2 text-xs text-[var(--text)] hover:bg-white/10">
                         Edit
                       </button>
@@ -442,6 +493,58 @@ export default function AdminAlbumsPage() {
               {importResults.length === 0 && !importing && (
                 <div className="text-center text-sm text-muted">Search for albums to import from iTunes.</div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {assignSongsModalOpen && assigningAlbum && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-2xl rounded-2xl border border-app bg-panel p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-[var(--text)]">Assign Songs to "{assigningAlbum.title}"</h2>
+              <button type="button" onClick={() => setAssignSongsModalOpen(false)} className="text-muted hover:text-[var(--text)]">
+                ✕
+              </button>
+            </div>
+            <div className="mt-4 flex items-center justify-between border-b border-app pb-2">
+              <div className="flex gap-2 text-sm text-muted">
+                <button type="button" onClick={() => selectAllSongs(allSongs)} className="hover:text-[var(--text)]">Select All</button>
+                <span>|</span>
+                <button type="button" onClick={deselectAllSongs} className="hover:text-[var(--text)]">Deselect All</button>
+                <span className="ml-2 text-[var(--accent)]">{selectedSongIds.size} selected</span>
+              </div>
+              <button
+                type="button"
+                disabled={selectedSongIds.size === 0 || assigningSongs}
+                onClick={assignSongsToAlbum}
+                className="btn-primary rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50"
+              >
+                {assigningSongs ? "Assigning..." : `Assign ${selectedSongIds.size} Songs`}
+              </button>
+            </div>
+            <div className="mt-4 max-h-80 space-y-2 overflow-auto pr-2">
+              {allSongs.map((s) => (
+                <div
+                  key={s.id}
+                  className={`flex items-center gap-3 rounded-lg border border-app p-3 cursor-pointer transition ${
+                    selectedSongIds.has(s.id) ? "bg-[var(--accent)]/10" : "bg-input"
+                  }`}
+                  onClick={() => toggleSongSelection(s.id)}
+                >
+                  <input type="checkbox" checked={selectedSongIds.has(s.id)} onChange={() => {}} className="h-4 w-4 rounded" />
+                  <img
+                    src={resolveImageSrc({ url: s.cover_url, filePath: s.cover_file_path, bucket: "song-covers" })}
+                    alt=""
+                    className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-[var(--text)]">{s.title}</div>
+                    <div className="truncate text-xs text-muted">{s.year}</div>
+                  </div>
+                </div>
+              ))}
+              {allSongs.length === 0 && <div className="text-center text-sm text-muted">No songs available.</div>}
             </div>
           </div>
         </div>
