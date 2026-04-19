@@ -17,7 +17,7 @@ export default function SongDetailPage() {
   const [err, setErr] = useState<string | null>(null);
   const [song, setSong] = useState<Song | null>(null);
   const [album, setAlbum] = useState<Album | null>(null);
-  const [artists, setArtists] = useState<Array<{ role: string; id: string; name: string }>>([]);
+  const [artists, setArtists] = useState<Array<{ role: string; id: string; name: string; image_url: string | null; image_file_path: string | null }>>([]);
   const [links, setLinks] = useState<LinkRow[]>([]);
   const [albumSongs, setAlbumSongs] = useState<Song[]>([]);
   const [artistSongs, setArtistSongs] = useState<Song[]>([]);
@@ -42,7 +42,13 @@ export default function SongDetailPage() {
           s.album_id ? getAlbum(s.album_id) : Promise.resolve(null),
         ]);
         if (!mounted) return;
-        setArtists(songArtists.map((sa) => ({ role: sa.role, id: sa.artist.id, name: sa.artist.name })));
+        setArtists(songArtists.map((sa) => ({ 
+          role: sa.role, 
+          id: sa.artist.id, 
+          name: sa.artist.name,
+          image_url: sa.artist.image_url,
+          image_file_path: sa.artist.image_file_path
+        })));
         setLinks(songLinks);
         setAlbum(albumRow);
 
@@ -140,20 +146,32 @@ export default function SongDetailPage() {
         {/* Credits */}
         {artists.length > 0 && (
           <section>
-            <h2 className="mb-4 text-lg font-bold text-[var(--text)]">Credits</h2>
+            <h2 className="mb-4 text-lg font-bold text-primary">Credits</h2>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {artists.map((a) => (
-                <Link
-                  key={`${a.id}-${a.role}`}
-                  to={`/artists/${a.id}`}
-                  className="flex items-center gap-3 rounded-md bg-white/5 p-3 transition hover:bg-white/10"
-                >
-                  <div className="flex-1">
-                    <div className="text-xs text-[var(--accent)]">{a.role}</div>
-                    <div className="font-medium text-[var(--text)]">{a.name}</div>
-                  </div>
-                </Link>
-              ))}
+              {artists.map((a) => {
+                const aImg = resolveImageSrc({ url: a.image_url, filePath: a.image_file_path, bucket: "artist-images" });
+                return (
+                  <Link
+                    key={`${a.id}-${a.role}`}
+                    to={`/artists/${a.id}`}
+                    className="flex items-center gap-3 rounded-xl bg-surface p-3 transition hover:bg-card"
+                  >
+                    <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full">
+                      {aImg ? (
+                        <img src={aImg} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-card text-sm font-semibold text-secondary">
+                          {a.name[0]}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-semibold uppercase text-pink-500">{a.role}</div>
+                      <div className="truncate font-medium text-primary">{a.name}</div>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         )}
