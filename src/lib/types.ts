@@ -64,6 +64,7 @@ export type Link = {
   entity_id: string;
   platform: string;
   url: string;
+  title: string | null;
   category: LinkCategory | null;
   created_at: string;
 };

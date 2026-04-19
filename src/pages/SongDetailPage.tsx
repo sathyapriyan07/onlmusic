@@ -92,7 +92,7 @@ export default function SongDetailPage() {
     };
   }, [songId]);
 
-  const youtube = useMemo(() => links.find((l) => l.platform.toLowerCase().includes("youtube"))?.url, [links]);
+  const youtubeLink = useMemo(() => links.find((l) => l.platform.toLowerCase().includes("youtube")) ?? null, [links]);
 
   if (loading) return <div className="p-4">Loading...</div>;
   if (err) return <ErrorState title="Error" message={err} />;
@@ -144,7 +144,12 @@ export default function SongDetailPage() {
             </div>
           </div>
         </div>
-        {youtube && <PlayerEmbed url={youtube} />}
+        {youtubeLink && (
+          <>
+            <PlayerEmbed url={youtubeLink.url} />
+            {youtubeLink.title && <div className="mt-2 text-sm text-dim">{youtubeLink.title}</div>}
+          </>
+        )}
         {song.preview_url && <div className="max-w-md mx-auto sm:mx-0"><AudioPreview src={song.preview_url} /></div>}
       </div>
 

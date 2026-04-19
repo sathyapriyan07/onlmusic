@@ -78,6 +78,7 @@ create table if not exists public.links (
   entity_id uuid not null,
   platform text not null,
   url text not null,
+  title text,
   created_at timestamptz not null default now()
 );
 
