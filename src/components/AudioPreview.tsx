@@ -21,11 +21,11 @@ export default function AudioPreview({ src }: { src: string }) {
   const handleEnded = () => setPlaying(false);
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-app bg-black px-4 py-3">
+    <div className="flex items-center gap-3 rounded-2xl border border-app bg-panel px-4 py-3">
       <button
         type="button"
         onClick={toggle}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-black hover:bg-[var(--accent2)]"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-black hover:opacity-90"
       >
         {playing ? (
           <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">

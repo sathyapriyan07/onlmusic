@@ -10,13 +10,13 @@ export default function SearchBar({
   placeholder?: string;
 }) {
   return (
-    <label className="flex items-center gap-3 rounded-full border border-app bg-panel px-4 py-3 shadow-card">
+    <label className="flex items-center gap-3 rounded-full border border-app bg-panel px-4 py-3">
       <Search className="h-4 w-4 text-muted" />
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-transparent text-sm text-white outline-none placeholder:text-zinc-500"
+        className="w-full bg-transparent text-sm text-[var(--text)] outline-none placeholder:text-[var(--muted)]"
       />
     </label>
   );

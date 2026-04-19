@@ -80,15 +80,11 @@ export default function UnifiedSearch() {
     return resolveImageSrc({ url: r.image, bucket: "artist-images" });
   };
 
-  const getTypeColor = (type: string) => {
-    if (type === "song") return "text-red-400";
-    if (type === "album") return "text-blue-400";
-    return "text-purple-400";
-  };
+  const getTypeColor = (_type: string) => "text-muted";
 
   return (
     <div className="relative">
-      <label className="flex items-center gap-3 rounded-full border border-app bg-panel px-4 py-3 shadow-card">
+      <label className="flex items-center gap-3 rounded-full border border-app bg-panel px-4 py-3">
         <Search className="h-4 w-4 text-muted" />
         <input
           ref={inputRef}
@@ -98,12 +94,12 @@ export default function UnifiedSearch() {
           onBlur={() => setTimeout(() => setOpen(false), 200)}
           onKeyDown={handleKeyDown}
           placeholder="Search songs, albums, artists…"
-          className="w-full bg-transparent text-sm text-white outline-none placeholder:text-zinc-500"
+          className="w-full bg-transparent text-sm text-[var(--text)] outline-none placeholder:text-[var(--muted)]"
         />
       </label>
 
       {open && results.length > 0 && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-80 overflow-auto rounded-2xl border border-app bg-panel shadow-card">
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-80 overflow-auto rounded-2xl border border-app bg-panel">
           {results.map((r, idx) => {
             const path = r.type === "song" ? "/songs" : r.type === "album" ? "/albums" : "/artists";
             return (
@@ -112,14 +108,14 @@ export default function UnifiedSearch() {
                 to={`${path}/${r.id}`}
                 className={clsx(
                   "flex items-center gap-3 px-4 py-3 transition",
-                  idx === selectedIdx ? "bg-panel2" : "hover:bg-panel2/50",
+                  idx === selectedIdx ? "bg-panel2" : "hover:bg-panel2",
                 )}
               >
-                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-black/30">
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-panel2">
                   {r.image && <img src={getImage(r)} alt="" className="h-full w-full object-cover" />}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm text-white">{highlightMatch(r.title)}</div>
+                  <div className="truncate text-sm text-[var(--text)]">{highlightMatch(r.title)}</div>
                   <div className="flex items-center gap-2 text-xs text-muted">
                     <span className={getTypeColor(r.type)}>{r.type}</span>
                     {r.subtitle && <span>· {r.subtitle}</span>}

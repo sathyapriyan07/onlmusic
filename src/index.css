@@ -116,4 +116,7 @@ body {
   .text-dimmer {
     color: var(--text-dimmer);
   }
+  .bg-input {
+    background: var(--panel2);
+  }
 }

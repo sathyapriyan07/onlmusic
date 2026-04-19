@@ -1,10 +1,10 @@
 export function SkeletonCard() {
   return (
     <div className="animate-pulse rounded-xl bg-panel p-3">
-      <div className="aspect-square rounded-lg bg-white/10" />
+      <div className="aspect-square rounded-lg bg-panel2" />
       <div className="mt-3 space-y-2">
-        <div className="h-3 w-3/4 rounded bg-white/10" />
-        <div className="h-3 w-1/2 rounded bg-white/10" />
+        <div className="h-3 w-3/4 rounded bg-panel2" />
+        <div className="h-3 w-1/2 rounded bg-panel2" />
       </div>
     </div>
   );
