@@ -324,17 +324,17 @@ export default function AdminAlbumsPage() {
         <title>Admin Albums · ONL Music Discovery</title>
       </Helmet>
 
-      <div className="rounded-xl border border-app bg-panel p-6">
+      <div className="rounded-xl border border-app bg-panel p-4 sm:p-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-lg font-semibold text-[var(--text)]">Albums</h1>
             <p className="mt-1 text-sm text-muted">CRUD albums and assign multiple artists.</p>
           </div>
-          <div className="flex gap-2">
-            <button type="button" onClick={() => { setImportSource("itunes"); setImportModalOpen(true); }} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10">
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={() => { setImportSource("itunes"); setImportModalOpen(true); }} className="btn-secondary rounded-xl px-3 py-2 sm:px-4 sm:py-3 text-sm text-[var(--text)] hover:bg-white/10">
               iTunes
             </button>
-            <button type="button" onClick={() => { setImportSource("deezer"); setImportModalOpen(true); }} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10">
+            <button type="button" onClick={() => { setImportSource("deezer"); setImportModalOpen(true); }} className="btn-secondary rounded-xl px-3 py-2 sm:px-4 sm:py-3 text-sm text-[var(--text)] hover:bg-white/10">
               Deezer
             </button>
             <button type="button" onClick={resetForm} className="rounded-2xl border border-app bg-panel2 px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10">
@@ -346,17 +346,17 @@ export default function AdminAlbumsPage() {
         {err ? <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">{err}</div> : null}
 
         <div className="mt-5 grid gap-3 lg:grid-cols-2">
-          <div className="rounded-xl border border-app bg-panel2 p-4">
+          <div className="rounded-xl border border-app bg-panel2 p-3 sm:p-4">
             <div className="text-sm font-semibold text-[var(--text)]">{editing ? "Edit album" : "Create album"}</div>
             <div className="mt-3 space-y-3">
-              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500" />
-              <input value={releaseYear} onChange={(e) => setReleaseYear(e.target.value)} placeholder="Release year (optional)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500" />
-              <input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="Cover URL (optional)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500" />
-              <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)} className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] file:mr-3 file:rounded-full file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:font-semibold file:text-black" />
+              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className="w-full rounded-lg border border-app bg-black/30 px-3 py-2.5 sm:px-4 sm:py-3 text-sm text-[var(--text)] outline-none" />
+              <input value={releaseYear} onChange={(e) => setReleaseYear(e.target.value)} placeholder="Release year (optional)" className="w-full rounded-lg border border-app bg-black/30 px-3 py-2.5 sm:px-4 sm:py-3 text-sm text-[var(--text)] outline-none" />
+              <input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="Cover URL (optional)" className="w-full rounded-lg border border-app bg-black/30 px-3 py-2.5 sm:px-4 sm:py-3 text-sm text-[var(--text)] outline-none" />
+              <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)} className="w-full rounded-lg border border-app bg-black/30 px-3 py-2.5 sm:px-4 sm:py-3 text-sm text-[var(--text)] file:mr-2 file:rounded-full file:border-0 file:bg-white file:px-2 file:py-1.5 sm:file:px-3 sm:file:py-2 file:text-xs sm:file:text-sm file:font-semibold file:text-black" />
 
-              <div className="rounded-lg border border-app bg-black/20 p-3">
+              <div className="rounded-lg border border-app bg-black/20 p-2.5 sm:p-3">
                 <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Album artists</div>
-                <div className="max-h-44 space-y-2 overflow-auto pr-1">
+                <div className="max-h-32 sm:max-h-44 space-y-2 overflow-auto pr-1">
                   {sortedArtists.map((a) => (
                     <label key={a.id} className="flex items-center gap-2 text-sm text-[var(--text)]">
                       <input
@@ -386,16 +386,16 @@ export default function AdminAlbumsPage() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-app bg-panel2 p-4">
+          <div className="rounded-xl border border-app bg-panel2 p-3 sm:p-4">
             <div className="text-sm font-semibold text-[var(--text)]">Existing</div>
             {loading ? (
               <div className="mt-3 text-sm text-muted">Loading…</div>
             ) : (
-              <div className="mt-3 max-h-[520px] space-y-2 overflow-auto pr-2">
+              <div className="mt-3 max-h-[400px] sm:max-h-[520px] space-y-2 overflow-auto pr-2">
                 {albums.map((a) => (
-                  <div key={a.id} className="flex items-center justify-between gap-3 rounded-lg border border-app bg-black/20 px-3 py-2">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="h-10 w-10 overflow-hidden rounded-xl bg-black/20">
+                  <div key={a.id} className="flex items-start justify-between gap-2 rounded-lg border border-app bg-black/20 px-2.5 py-2 sm:px-3 sm:py-2">
+                    <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+                      <div className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 overflow-hidden rounded-lg sm:rounded-xl bg-black/20">
                         {a.cover_url || a.cover_file_path ? (
                           <img
                             src={resolveImageSrc({ url: a.cover_url, filePath: a.cover_file_path, bucket: BUCKET })}
@@ -409,15 +409,15 @@ export default function AdminAlbumsPage() {
                         {a.release_year ? <div className="text-xs text-muted">{a.release_year}</div> : null}
                       </div>
                     </div>
-                    <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-                      <button type="button" onClick={() => openAssignSongs(a)} className="rounded-xl border border-app bg-panel2 px-3 py-2 text-xs text-[var(--text)] hover:bg-white/10">
+                    <div className="flex shrink-0 flex-wrap gap-1.5 sm:flex-nowrap">
+                      <button type="button" onClick={() => openAssignSongs(a)} className="rounded-lg border border-app bg-panel2 px-2 py-1 text-xs text-[var(--text)] hover:bg-white/10">
                         + Songs
                       </button>
-                      <button type="button" onClick={() => startEdit(a)} className="rounded-xl border border-app bg-panel2 px-3 py-2 text-xs text-[var(--text)] hover:bg-white/10">
+                      <button type="button" onClick={() => startEdit(a)} className="rounded-lg border border-app bg-panel2 px-2 py-1 text-xs text-[var(--text)] hover:bg-white/10">
                         Edit
                       </button>
-                      <button type="button" onClick={() => del(a.id)} className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200 hover:bg-red-500/20">
-                        Delete
+                      <button type="button" onClick={() => del(a.id)} className="rounded-lg border border-red-500/30 bg-red-500/10 px-2 py-1 text-xs text-red-200 hover:bg-red-500/20">
+                        Del
                       </button>
                     </div>
                   </div>
