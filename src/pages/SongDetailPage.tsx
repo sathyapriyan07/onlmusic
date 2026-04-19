@@ -193,7 +193,7 @@ export default function SongDetailPage() {
                   <tr>
                     <th className="pb-2 font-medium w-10">#</th>
                     <th className="pb-2 font-medium">Title</th>
-                    <th className="pb-2 font-medium w-10 hidden sm:table-cell"></th>
+                    <th className="pb-2 font-medium w-10"></th>
                     <th className="pb-2 font-medium hidden sm:table-cell">Duration</th>
                   </tr>
                 </thead>
@@ -216,7 +216,7 @@ export default function SongDetailPage() {
                           </div>
                         </Link>
                       </td>
-                      <td className="py-2 hidden sm:table-cell">
+                      <td className="py-2">
                         {item.song.preview_url && (
                           <button
                             type="button"
