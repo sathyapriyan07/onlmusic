@@ -1,7 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useParams } from "react-router-dom";
+import { Play, Pause } from "lucide-react";
+import clsx from "clsx";
 import LinkButtons from "../components/LinkButtons";
+import ViewToggle from "../components/ViewToggle";
+import type { ViewMode } from "../components/ViewToggle";
 import { ErrorState } from "../components/States";
 import { getAlbum, getAlbumArtists, listAlbumSongs, listLinks } from "../lib/db";
 import type { Album, Link as LinkRow, Song } from "../lib/types";
@@ -17,6 +21,9 @@ export default function AlbumDetailPage() {
   const [artists, setArtists] = useState<Array<{ id: string; name: string }>>([]);
   const [songs, setSongs] = useState<Song[]>([]);
   const [links, setLinks] = useState<LinkRow[]>([]);
+  const [view, setView] = useState<ViewMode>("grid");
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const audioRefs = useRef<Record<string, HTMLAudioElement>>({});
 
   useEffect(() => {
     let mounted = true;
@@ -102,37 +109,101 @@ export default function AlbumDetailPage() {
 
       {/* Tracklist */}
       <section className="pb-8">
-        <h2 className="mb-4 text-lg font-bold text-[var(--text)]">Tracklist</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-bold text-[var(--text)]">Tracklist</h2>
+          <ViewToggle mode={view} onChange={setView} />
+        </div>
         {songs.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-white/10 text-xs uppercase text-dim">
-                <tr>
-                  <th className="pb-2 font-medium">#</th>
-                  <th className="pb-2 font-medium">Title</th>
-                  <th className="pb-2 font-medium hidden sm:table-cell">Duration</th>
-                </tr>
-              </thead>
-              <tbody>
-                {songs.map((s, i) => (
-                  <tr key={s.id} className="border-b border-white/5 hover:bg-white/5">
-                    <td className="py-2 pr-4 text-dim">{i + 1}</td>
-                    <td className="py-2">
-                      <Link to={`/songs/${s.id}`} className="flex items-center gap-3 group">
-                        <img
-                          src={resolveImageSrc({ url: s.cover_url, filePath: s.cover_file_path, bucket: "song-covers" })}
-                          alt=""
-                          className="h-10 w-10 rounded shrink-0"
-                        />
-                        <span className="font-medium text-[var(--text)] group-hover:text-[var(--accent)]">{s.title}</span>
-                      </Link>
-                    </td>
-                    <td className="py-2 text-dim hidden sm:table-cell">{s.duration || "—"}</td>
+          view === "grid" ? (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              {songs.map((s) => (
+                <div key={s.id} className="group relative rounded-lg border border-app bg-panel p-3 transition hover:bg-panel2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (playingId === s.id) {
+                        setPlayingId(null);
+                      } else {
+                        setPlayingId(s.id);
+                        audioRefs.current[s.id]?.play();
+                      }
+                    }}
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--accent)] p-3 opacity-0 transition group-hover:opacity-100"
+                  >
+                    {playingId === s.id ? <Pause className="h-5 w-5 text-black" /> : <Play className="h-5 w-5 text-black" />}
+                  </button>
+                  <img
+                    src={resolveImageSrc({ url: s.cover_url, filePath: s.cover_file_path, bucket: "song-covers" })}
+                    alt=""
+                    className="aspect-square w-full rounded-lg object-cover"
+                  />
+                  <div className="mt-2 truncate text-sm font-medium text-[var(--text)]">{s.title}</div>
+                  <div className="text-xs text-dim">{s.duration || "—"}</div>
+                  {s.preview_url && (
+                    <audio
+                      ref={(el: HTMLAudioElement | null) => {
+                        if (el) audioRefs.current[s.id] = el;
+                      }}
+                      src={s.preview_url}
+                      onEnded={() => setPlayingId(null)}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="border-b border-app text-xs uppercase text-dim">
+                  <tr>
+                    <th className="pb-2 font-medium w-12">#</th>
+                    <th className="pb-2 font-medium">Title</th>
+                    <th className="pb-2 font-medium w-20">Preview</th>
+                    <th className="pb-2 font-medium w-20 hidden sm:table-cell">Duration</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {songs.map((s, i) => (
+                    <tr key={s.id} className="border-b border-app hover:bg-panel2">
+                      <td className="py-2 pr-4 text-dim">{i + 1}</td>
+                      <td className="py-2">
+                        <Link to={`/songs/${s.id}`} className="flex items-center gap-3 group">
+                          <img
+                            src={resolveImageSrc({ url: s.cover_url, filePath: s.cover_file_path, bucket: "song-covers" })}
+                            alt=""
+                            className="h-10 w-10 rounded shrink-0"
+                          />
+                          <span className="font-medium text-[var(--text)] group-hover:text-[var(--accent)]">{s.title}</span>
+                        </Link>
+                      </td>
+                      <td className="py-2">
+                        {s.preview_url ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (playingId === s.id) {
+                                setPlayingId(null);
+                              } else {
+                                setPlayingId(s.id);
+                                audioRefs.current[s.id]?.play();
+                              }
+                            }}
+                            className={clsx(
+                              "rounded-full p-2 transition",
+                              playingId === s.id ? "bg-[var(--accent)] text-black" : "bg-panel2 text-[var(--text)] hover:bg-white/10"
+                            )}
+                          >
+                            {playingId === s.id ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                          </button>
+                        ) : null}
+                      </td>
+                      <td className="py-2 text-dim hidden sm:table-cell">{s.duration || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
         ) : (
           <div className="text-dim">No tracks yet.</div>
         )}
