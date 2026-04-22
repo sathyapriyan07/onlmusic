@@ -150,7 +150,7 @@ export default function AlbumDetailPage() {
       )}
 
       {/* Tracklist */}
-      <section className="pb-8">
+      <section className="mt-6 pb-8">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-bold text-[var(--text)]">Tracklist</h2>
           <ViewToggle mode={view} onChange={setView} />
