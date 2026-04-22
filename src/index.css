@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -48,7 +48,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family:
-    "Nunito",
+    "Poppins",
     ui-sans-serif,
     system-ui,
     -apple-system,
