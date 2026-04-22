@@ -26,6 +26,9 @@ export default function AdminLayout() {
         <NavLink to="/admin/links" className={linkClass}>
           Links
         </NavLink>
+        <NavLink to="/admin/rights" className={linkClass}>
+          Rights
+        </NavLink>
         <NavLink to="/admin/homepage" className={linkClass}>
           Homepage
         </NavLink>
@@ -50,6 +53,9 @@ export default function AdminLayout() {
             </NavLink>
             <NavLink to="/admin/links" className={linkClass}>
               Links
+            </NavLink>
+            <NavLink to="/admin/rights" className={linkClass}>
+              Rights
             </NavLink>
             <NavLink to="/admin/homepage" className={linkClass}>
               Homepage sections

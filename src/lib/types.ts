@@ -23,6 +23,7 @@ export type Album = {
   cover_url: string | null;
   cover_file_path: string | null;
   release_year: number | null;
+  music_rights: string | null;
   published: boolean;
   created_at: string;
 };
@@ -77,6 +78,15 @@ export type HomepageSection = {
   type: HomepageSectionType;
   items: string[];
   order: number;
+  created_at: string;
+};
+
+export type MusicRights = {
+  id: number;
+  name: string;
+  description: string | null;
+  logo_url: string | null;
+  logo_file_path: string | null;
   created_at: string;
 };
 

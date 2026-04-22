@@ -5,6 +5,7 @@ import type {
   HomepageSection,
   Link,
   LinkEntityType,
+  MusicRights,
   Song,
 } from "./types";
 
@@ -246,4 +247,81 @@ export async function searchAll(q: string): Promise<SearchResult[]> {
     }
   }
   return results.slice(0, 10);
+}
+
+export async function listMusicRights(): Promise<MusicRights[]> {
+  const { data, error } = await supabase
+    .from("music_rights")
+    .select("id,name,description,logo_url,logo_file_path,created_at")
+    .order("name", { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as MusicRights[];
+}
+
+export async function createMusicRights(name: string, description?: string, logoUrl?: string, logoFilePath?: string): Promise<MusicRights> {
+  const { data, error } = await supabase
+    .from("music_rights")
+    .insert({ 
+      name: name.trim(), 
+      description: description?.trim() || null,
+      logo_url: logoUrl?.trim() || null,
+      logo_file_path: logoFilePath || null
+    })
+    .select("id,name,description,logo_url,logo_file_path,created_at")
+    .single();
+  if (error) throw error;
+  return data as MusicRights;
+}
+
+export async function updateMusicRights(id: number, name: string, description?: string, logoUrl?: string, logoFilePath?: string): Promise<MusicRights> {
+  const { data, error } = await supabase
+    .from("music_rights")
+    .update({ 
+      name: name.trim(), 
+      description: description?.trim() || null,
+      logo_url: logoUrl?.trim() || null,
+      logo_file_path: logoFilePath || null
+    })
+    .eq("id", id)
+    .select("id,name,description,logo_url,logo_file_path,created_at")
+    .single();
+  if (error) throw error;
+  return data as MusicRights;
+}
+
+export async function deleteMusicRights(id: number) {
+  const { error } = await supabase.from("music_rights").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function assignMusicRightsToSong(songId: string, rightId: number) {
+  const { error } = await supabase
+    .from("songs")
+    .update({ music_rights: String(rightId) })
+    .eq("id", songId);
+  if (error) throw error;
+}
+
+export async function assignMusicRightsToAlbum(albumId: string, rightId: number) {
+  const { error } = await supabase
+    .from("albums")
+    .update({ music_rights: String(rightId) })
+    .eq("id", albumId);
+  if (error) throw error;
+}
+
+export async function clearMusicRightsFromSong(songId: string) {
+  const { error } = await supabase
+    .from("songs")
+    .update({ music_rights: null })
+    .eq("id", songId);
+  if (error) throw error;
+}
+
+export async function clearMusicRightsFromAlbum(albumId: string) {
+  const { error } = await supabase
+    .from("albums")
+    .update({ music_rights: null })
+    .eq("id", albumId);
+  if (error) throw error;
 }

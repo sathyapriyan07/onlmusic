@@ -17,6 +17,7 @@ import AdminAlbumsPage from "./pages/admin/AdminAlbumsPage";
 import AdminSongsPage from "./pages/admin/AdminSongsPage";
 import AdminHomepageSectionsPage from "./pages/admin/AdminHomepageSectionsPage";
 import AdminLinksPage from "./pages/admin/AdminLinksPage";
+import AdminMusicRightsPage from "./pages/admin/AdminMusicRightsPage";
 import RequireAdmin from "./components/RequireAdmin";
 
 export default function App() {
@@ -56,6 +57,7 @@ export default function App() {
           <Route path="songs" element={<AdminSongsPage />} />
           <Route path="homepage" element={<AdminHomepageSectionsPage />} />
           <Route path="links" element={<AdminLinksPage />} />
+          <Route path="rights" element={<AdminMusicRightsPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
