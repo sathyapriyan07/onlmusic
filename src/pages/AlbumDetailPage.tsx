@@ -17,7 +17,7 @@ export default function AlbumDetailPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [album, setAlbum] = useState<Album | null>(null);
-  const [artists, setArtists] = useState<Array<{ id: string; name: string }>>([]);
+  const [artists, setArtists] = useState<Array<{ id: string; name: string; imageUrl?: string; imageFilePath?: string }>>([]);
   const [songs, setSongs] = useState<Array<{ song: Song; artists: Array<{ id: string; name: string }> }>>([]);
   const [links, setLinks] = useState<LinkRow[]>([]);
   const [view, setView] = useState<ViewMode>("grid");
@@ -41,7 +41,7 @@ export default function AlbumDetailPage() {
           listLinks({ type: "album", id: a.id }),
         ]);
         if (!mounted) return;
-        setArtists(rels.map((r) => ({ id: r.artist.id, name: r.artist.name })));
+        setArtists(rels.map((r) => ({ id: r.artist.id, name: r.artist.name, imageUrl: r.artist.image_url ?? undefined, imageFilePath: r.artist.image_file_path ?? undefined })));
         const withArtists = await Promise.all(
           albumSongsList.map(async (sg) => {
             const sas = await getSongArtists(sg.id);
@@ -129,9 +129,22 @@ export default function AlbumDetailPage() {
                 to={`/artists/${a.id}`}
                 className="flex items-center gap-3 rounded-md bg-panel p-3 transition hover:bg-panel2"
               >
-                <div className="flex-1">
+                <div className="h-12 w-12 rounded-full bg-panel2 overflow-hidden shrink-0">
+                  {a.imageUrl || a.imageFilePath ? (
+                    <img
+                      src={resolveImageSrc({ url: a.imageUrl, filePath: a.imageFilePath, bucket: "artist-images" })}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="h-full w-full flex items-center justify-center text-lg font-bold text-muted">
+                      {a.name[0]}
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
                   <div className="text-xs text-[var(--accent)]">Artist</div>
-                  <div className="font-medium text-[var(--text)]">{a.name}</div>
+                  <div className="font-medium text-[var(--text)] truncate">{a.name}</div>
                 </div>
               </Link>
             ))}
