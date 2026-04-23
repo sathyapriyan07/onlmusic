@@ -4,6 +4,8 @@ import { supabase } from "../../lib/supabaseClient";
 import type { Album, Artist, Song } from "../../lib/types";
 import { listAlbums, listArtists, listSongs } from "../../lib/db";
 import { resolveImageSrc } from "../../lib/images";
+import { AdminCard, AdminModal, FormField, FormActions, AdminButton, AdminEmpty } from "../../components/admin/AdminComponents";
+import { Search, Edit2, Trash2, Upload, Plus, X } from "lucide-react";
 
 const BUCKET = "song-covers";
 
@@ -27,6 +29,7 @@ export default function AdminSongsPage() {
   const [albums, setAlbums] = useState<Album[]>([]);
   const [artists, setArtists] = useState<Artist[]>([]);
 
+  const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Song | null>(null);
   const [title, setTitle] = useState("");
   const [albumId, setAlbumId] = useState<string>("");
@@ -39,6 +42,7 @@ export default function AdminSongsPage() {
   const [published, setPublished] = useState(true);
   const [credits, setCredits] = useState<Credit[]>([]);
   const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [importQuery, setImportQuery] = useState("");
@@ -68,6 +72,7 @@ export default function AdminSongsPage() {
   }, []);
 
   function resetForm() {
+    setShowForm(false);
     setEditing(null);
     setTitle("");
     setAlbumId("");
@@ -102,6 +107,7 @@ export default function AdminSongsPage() {
     setPreviewUrl(s.preview_url ?? "");
     setPublished(s.published ?? true);
     await loadSongArtists(s.id);
+    setShowForm(true);
   }
 
   async function uploadIfAny(): Promise<string | null> {
@@ -178,6 +184,13 @@ export default function AdminSongsPage() {
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Failed to delete song.");
     }
+  }
+
+  async function doSearch() {
+    if (!importQuery.trim()) return;
+    if (importSource === "itunes") await searchItunes(importQuery);
+    else if (importSource === "musicbrainz") await searchMusicBrainz(importQuery);
+    else await searchDeezer(importQuery);
   }
 
   async function searchItunes(q: string) {
@@ -266,7 +279,7 @@ export default function AdminSongsPage() {
     );
     if (existingSong) {
       if (!confirm(`"${r.trackName}" already exists. Select anyway?`)) return;
-      setEditing(existingSong);
+      startEdit(existingSong);
     } else {
       resetForm();
       setTitle(r.trackName);
@@ -284,6 +297,7 @@ export default function AdminSongsPage() {
       if (r.previewUrl) {
         setPreviewUrl(r.previewUrl);
       }
+      setShowForm(true);
     }
     setImportModalOpen(false);
   }
@@ -331,53 +345,58 @@ export default function AdminSongsPage() {
     });
   }
 
-  function selectAll() {
-    setSelectedImportIds(new Set(importResults.map((r) => r.trackId)));
-  }
-
-  function deselectAll() {
-    setSelectedImportIds(new Set());
-  }
-
   const sortedAlbums = useMemo(() => [...albums].sort((a, b) => a.title.localeCompare(b.title)), [albums]);
   const sortedArtists = useMemo(() => [...artists].sort((a, b) => a.name.localeCompare(b.name)), [artists]);
+  const filteredSongs = songs.filter(s => 
+    s.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <div className="space-y-4">
+    <div>
       <Helmet>
         <title>Admin Songs · ONL Music Discovery</title>
       </Helmet>
 
-      <div className="rounded-xl border border-app bg-panel p-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-lg font-semibold text-[var(--text)]">Songs</h1>
-            <p className="mt-1 text-sm text-muted">CRUD songs, assign album, and add multiple artists with roles (singer, composer, lyricist…).</p>
-          </div>
-          <div className="flex gap-2">
-            <button type="button" onClick={() => { setImportSource("itunes"); setImportModalOpen(true); }} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10">
-              iTunes
-            </button>
-            <button type="button" onClick={() => { setImportSource("musicbrainz"); setImportModalOpen(true); }} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10">
-              MusicBrainz
-            </button>
-            <button type="button" onClick={() => { setImportSource("deezer"); setImportModalOpen(true); }} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10">
-              Deezer
-            </button>
-            <button type="button" onClick={resetForm} className="btn-secondary rounded-2xl px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10">
-              New song
-            </button>
-          </div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--text)]">Songs</h1>
+          <p className="text-sm text-[var(--muted)] mt-1">Manage your song catalog</p>
         </div>
+        <div className="flex gap-2">
+          <AdminButton variant="secondary" onClick={() => { setImportSource("itunes"); setImportModalOpen(true); }}>
+            <Search className="w-4 h-4 mr-2" /> Import
+          </AdminButton>
+          <AdminButton onClick={() => { resetForm(); setShowForm(true); }}>
+            <Plus className="w-4 h-4 mr-2" /> Add Song
+          </AdminButton>
+        </div>
+      </div>
 
-        {err ? <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">{err}</div> : null}
+      {err && (
+        <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+          {err}
+        </div>
+      )}
 
-        <div className="mt-5 grid gap-3 lg:grid-cols-2">
-          <div className="rounded-xl border border-app bg-panel2 p-4">
-            <div className="text-sm font-semibold text-[var(--text)]">{editing ? "Edit song" : "Create song"}</div>
-            <div className="mt-3 space-y-3">
-              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500" />
-              <select value={albumId} onChange={(e) => setAlbumId(e.target.value)} className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none">
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Form Card */}
+        <AdminCard title={editing ? "Edit Song" : "Add New Song"}>
+          <div className="space-y-4">
+            <FormField label="Title">
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter song title"
+                className="w-full px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none focus:border-[var(--accent)] transition-colors"
+              />
+            </FormField>
+
+            <FormField label="Album">
+              <select
+                value={albumId}
+                onChange={(e) => setAlbumId(e.target.value)}
+                className="w-full px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none focus:border-[var(--accent)] transition-colors"
+              >
                 <option value="">No album</option>
                 {sortedAlbums.map((a) => (
                   <option key={a.id} value={a.id}>
@@ -385,220 +404,305 @@ export default function AdminSongsPage() {
                   </option>
                 ))}
               </select>
-              <div className="grid grid-cols-2 gap-2">
-                <input value={year} onChange={(e) => setYear(e.target.value)} placeholder="Year" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500" />
-                <input value={duration} onChange={(e) => setDuration(e.target.value)} placeholder="Duration (e.g. 3:42)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500" />
-              </div>
-              <input value={rights} onChange={(e) => setRights(e.target.value)} placeholder="Music rights (optional)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500" />
+            </FormField>
 
-              <input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="Cover URL (optional)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500" />
-              <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)} className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] file:mr-3 file:rounded-full file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:font-semibold file:text-black" />
-              <input value={previewUrl} onChange={(e) => setPreviewUrl(e.target.value)} placeholder="Preview URL (30-sec iTunes audio)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500" />
-
-              <label className="flex items-center gap-3 rounded-lg border border-app bg-black/30 px-4 py-3">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField label="Year">
                 <input
-                  type="checkbox"
-                  checked={published}
-                  onChange={(e) => setPublished(e.target.checked)}
-                  className="h-4 w-4"
+                  value={year}
+                  onChange={(e) => setYear(e.target.value)}
+                  placeholder="e.g. 2024"
+                  className="w-full px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none focus:border-[var(--accent)] transition-colors"
                 />
-                <span className="text-sm text-[var(--text)]">Published (show on site)</span>
-              </label>
-
-              <div className="rounded-lg border border-app bg-black/20 p-3">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-muted">Credits</div>
-                  <button
-                    type="button"
-                    onClick={() => setCredits((prev) => [...prev, { artist_id: "", role: "" }])}
-                        className="btn-secondary rounded-xl px-3 py-2 text-xs text-[var(--text)] hover:bg-white/10"
-                  >
-                    Add credit
-                  </button>
-                </div>
-                <div className="mt-3 space-y-2">
-                  {credits.map((c, idx) => (
-                    <div key={idx} className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_auto]">
-                      <select
-                        value={c.artist_id}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          setCredits((prev) => prev.map((x, i) => (i === idx ? { ...x, artist_id: v } : x)));
-                        }}
-                        className="rounded-lg border border-app bg-black/30 px-3 py-2 text-sm text-[var(--text)] outline-none"
-                      >
-                        <option value="">Select artist</option>
-                        {sortedArtists.map((a) => (
-                          <option key={a.id} value={a.id}>
-                            {a.name}
-                          </option>
-                        ))}
-                      </select>
-                      <input
-                        value={c.role}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          setCredits((prev) => prev.map((x, i) => (i === idx ? { ...x, role: v } : x)));
-                        }}
-                        placeholder="Role (singer/composer/lyricist...)"
-                        className="rounded-lg border border-app bg-black/30 px-3 py-2 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setCredits((prev) => prev.filter((_, i) => i !== idx))}
-                        className="w-full rounded-2xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200 hover:bg-red-500/20 sm:w-auto"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ))}
-                  {credits.length === 0 ? <div className="text-sm text-muted">Add one or more credits (artist + role).</div> : null}
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <button type="button" disabled={saving} onClick={save} className="btn-primary rounded-full px-4 py-3 text-sm font-semibold disabled:opacity-50">
-                  {saving ? "Saving…" : "Save"}
-                </button>
-                {editing ? (
-                  <button type="button" onClick={resetForm} className="rounded-full bg-black/30 px-4 py-3 text-sm text-[var(--text)] hover:bg-black/40">
-                    Cancel
-                  </button>
-                ) : null}
-              </div>
+              </FormField>
+              <FormField label="Duration">
+                <input
+                  value={duration}
+                  onChange={(e) => setDuration(e.target.value)}
+                  placeholder="e.g. 3:42"
+                  className="w-full px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none focus:border-[var(--accent)] transition-colors"
+                />
+              </FormField>
             </div>
-          </div>
 
-          <div className="rounded-xl border border-app bg-panel2 p-4">
-            <div className="text-sm font-semibold text-[var(--text)]">Existing</div>
-            {loading ? (
-              <div className="mt-3 text-sm text-muted">Loading…</div>
-            ) : (
-              <div className="mt-3 max-h-[520px] space-y-2 overflow-auto pr-2">
-                {songs.map((s) => (
-                  <div key={s.id} className="flex items-center justify-between gap-3 rounded-lg border border-app bg-black/20 px-3 py-2">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="h-10 w-10 overflow-hidden rounded-xl bg-black/20">
-                        {s.cover_url || s.cover_file_path ? (
-                          <img
-                            src={resolveImageSrc({ url: s.cover_url, filePath: s.cover_file_path, bucket: BUCKET })}
-                            alt=""
-                            className="h-full w-full object-cover"
-                          />
-                        ) : null}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-medium text-[var(--text)]">{s.title}</div>
-                        <div className="truncate text-xs text-muted">
-                          {[s.year ? String(s.year) : "", s.duration ?? ""].filter(Boolean).join(" · ") || "—"}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
-                      <button type="button" onClick={() => startEdit(s)} className="btn-secondary rounded-xl px-3 py-2 text-xs text-[var(--text)] hover:bg-white/10">
-                        Edit
-                      </button>
-                      <button type="button" onClick={() => del(s.id)} className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200 hover:bg-red-500/20">
-                        Delete
-                      </button>
-                    </div>
+            <FormField label="Music Rights (optional)">
+              <input
+                value={rights}
+                onChange={(e) => setRights(e.target.value)}
+                placeholder="e.g. BMI, ASCAP"
+                className="w-full px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none focus:border-[var(--accent)] transition-colors"
+              />
+            </FormField>
+
+            <FormField label="Cover Image">
+              <div className="flex items-center gap-4">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)}
+                  className="hidden"
+                  id="cover-file"
+                />
+                <label
+                  htmlFor="cover-file"
+                  className="flex items-center justify-center w-20 h-20 rounded-xl border-2 border-dashed border-app hover:border-[var(--accent)] transition-colors cursor-pointer"
+                >
+                  <Upload className="w-6 h-6 text-[var(--muted)]" />
+                </label>
+                {(coverFile || coverUrl || editing?.cover_url || editing?.cover_file_path) && (
+                  <div className="relative">
+                    <img
+                      src={coverFile ? URL.createObjectURL(coverFile) : resolveImageSrc({ 
+                        url: coverUrl || (editing?.cover_url ?? undefined), 
+                        filePath: editing?.cover_file_path ?? undefined, 
+                        bucket: BUCKET 
+                      })}
+                      alt=""
+                      className="w-20 h-20 rounded-xl object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => { setCoverFile(null); setCoverUrl(""); }}
+                      className="absolute -top-2 -right-2 p-1 bg-red-500 rounded-full"
+                    >
+                      <X className="w-3 h-3 text-white" />
+                    </button>
+                  </div>
+                )}
+              </div>
+              <input
+                value={coverUrl}
+                onChange={(e) => setCoverUrl(e.target.value)}
+                placeholder="Or paste cover URL"
+                className="w-full mt-3 px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none focus:border-[var(--accent)] transition-colors"
+              />
+            </FormField>
+
+            <FormField label="Preview URL (optional)">
+              <input
+                value={previewUrl}
+                onChange={(e) => setPreviewUrl(e.target.value)}
+                placeholder="30-sec preview audio URL"
+                className="w-full px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none focus:border-[var(--accent)] transition-colors"
+              />
+            </FormField>
+
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="published"
+                checked={published}
+                onChange={(e) => setPublished(e.target.checked)}
+                className="w-4 h-4 accent-[var(--accent)]"
+              />
+              <label htmlFor="published" className="text-sm text-[var(--text)]">Published (show on site)</label>
+            </div>
+
+            <FormField label="Credits">
+              <div className="space-y-2">
+                {credits.map((c, idx) => (
+                  <div key={idx} className="grid grid-cols-[1fr_1fr_auto] gap-2">
+                    <select
+                      value={c.artist_id}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setCredits((prev) => prev.map((x, i) => (i === idx ? { ...x, artist_id: v } : x)));
+                      }}
+                      className="w-full px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none focus:border-[var(--accent)] transition-colors"
+                    >
+                      <option value="">Select artist</option>
+                      {sortedArtists.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.name}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      value={c.role}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setCredits((prev) => prev.map((x, i) => (i === idx ? { ...x, role: v } : x)));
+                      }}
+                      placeholder="Role (singer/composer/lyricist...)"
+                      className="w-full px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none focus:border-[var(--accent)] transition-colors"
+                    />
+                    <AdminButton variant="danger" onClick={() => setCredits((prev) => prev.filter((_, i) => i !== idx))}>
+                      <X className="w-4 h-4" />
+                    </AdminButton>
                   </div>
                 ))}
-                {songs.length === 0 ? <div className="text-sm text-muted">No songs yet.</div> : null}
+                <button
+                  type="button"
+                  onClick={() => setCredits((prev) => [...prev, { artist_id: "", role: "" }])}
+                  className="text-sm text-[var(--accent)] hover:underline"
+                >
+                  + Add credit
+                </button>
               </div>
-            )}
+            </FormField>
+
+            <FormActions>
+              <AdminButton onClick={save} disabled={saving || !title.trim()}>
+                {saving ? "Saving..." : editing ? "Update Song" : "Add Song"}
+              </AdminButton>
+              {showForm && <AdminButton variant="secondary" onClick={resetForm}>Cancel</AdminButton>}
+            </FormActions>
           </div>
-        </div>
+        </AdminCard>
+
+        {/* List Card */}
+        <AdminCard 
+          title={`Songs (${filteredSongs.length})`}
+          action={
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search..."
+              className="px-3 py-1.5 bg-white/5 border border-app rounded-lg text-sm text-[var(--text)] outline-none"
+            />
+          }
+        >
+          {loading ? (
+            <div className="py-8 text-center text-[var(--muted)]">Loading...</div>
+          ) : filteredSongs.length === 0 ? (
+            <AdminEmpty title="No songs found" description="Add your first song to get started" />
+          ) : (
+            <div className="max-h-[500px] overflow-y-auto space-y-2">
+              {filteredSongs.map((s) => (
+                <div
+                  key={s.id}
+                  className="flex items-center gap-4 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-white/10 overflow-hidden shrink-0">
+                    {s.cover_url || s.cover_file_path ? (
+                      <img
+                        src={resolveImageSrc({ url: s.cover_url, filePath: s.cover_file_path, bucket: BUCKET })}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : null}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-[var(--text)] truncate">{s.title}</p>
+                    <p className="text-xs text-[var(--muted)] truncate">
+                      {[s.year ? String(s.year) : "", s.duration ?? ""].filter(Boolean).join(" · ") || "—"}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => startEdit(s)}
+                      className="p-2 rounded-lg bg-white/10 text-[var(--muted)] hover:text-[var(--text)]"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => del(s.id)}
+                      className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </AdminCard>
       </div>
 
-      {importModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4 overflow-auto">
-          <div className="w-full max-w-2xl rounded-2xl border border-app bg-panel p-4 sm:p-6 my-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-[var(--text)]">{importSource === "itunes" ? "iTunes" : importSource === "musicbrainz" ? "MusicBrainz" : "Deezer"} Import</h2>
-              <button type="button" onClick={() => setImportModalOpen(false)} className="text-muted hover:text-[var(--text)]">
-                ✕
-              </button>
+      {/* Import Modal */}
+      <AdminModal open={importModalOpen} onClose={() => setImportModalOpen(false)} title="Import Songs">
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            <button
+              onClick={() => { setImportSource("itunes"); setImportResults([]); setImportQuery(""); }}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                importSource === "itunes" ? "bg-[var(--accent)] text-black" : "bg-white/10 text-[var(--text)]"
+              }`}
+            >
+              iTunes
+            </button>
+            <button
+              onClick={() => { setImportSource("musicbrainz"); setImportResults([]); setImportQuery(""); }}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                importSource === "musicbrainz" ? "bg-[var(--accent)] text-black" : "bg-white/10 text-[var(--text)]"
+              }`}
+            >
+              MusicBrainz
+            </button>
+            <button
+              onClick={() => { setImportSource("deezer"); setImportResults([]); setImportQuery(""); }}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                importSource === "deezer" ? "bg-[var(--accent)] text-black" : "bg-white/10 text-[var(--text)]"
+              }`}
+            >
+              Deezer
+            </button>
+          </div>
+          
+          <div className="flex gap-2">
+            <input
+              value={importQuery}
+              onChange={(e) => setImportQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && doSearch()}
+              placeholder="Search songs..."
+              className="flex-1 px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none"
+            />
+            <AdminButton onClick={doSearch} disabled={importing}>
+              {importing ? "..." : <Search className="w-4 h-4" />}
+            </AdminButton>
+          </div>
+
+          {importResults.length > 0 && (
+            <div className="flex items-center justify-between py-2 border-b border-app">
+              <div className="text-sm text-[var(--muted)]">
+                <button onClick={() => setSelectedImportIds(new Set(importResults.map(r => r.trackId)))} className="hover:text-[var(--text)] mr-3">
+                  Select All
+                </button>
+                <span className="text-[var(--accent)]">{selectedImportIds.size} selected</span>
+              </div>
+              <AdminButton onClick={bulkImportSelected} disabled={selectedImportIds.size === 0 || bulkImporting}>
+                {bulkImporting ? "Importing..." : "Import"}
+              </AdminButton>
             </div>
-            <div className="mb-4 flex gap-2 border-b border-app">
-              <button type="button" onClick={() => { setImportSource("itunes"); setImportResults([]); setImportQuery(""); }} className={`px-4 py-2 text-sm font-medium border-b-2 transition ${importSource === "itunes" ? "border-[var(--accent)] text-[var(--text)]" : "border-transparent text-muted"}`}>
-                iTunes
-              </button>
-              <button type="button" onClick={() => { setImportSource("musicbrainz"); setImportResults([]); setImportQuery(""); }} className={`px-4 py-2 text-sm font-medium border-b-2 transition ${importSource === "musicbrainz" ? "border-[var(--accent)] text-[var(--text)]" : "border-transparent text-muted"}`}>
-                MusicBrainz
-              </button>
-              <button type="button" onClick={() => { setImportSource("deezer"); setImportResults([]); setImportQuery(""); }} className={`px-4 py-2 text-sm font-medium border-b-2 transition ${importSource === "deezer" ? "border-[var(--accent)] text-[var(--text)]" : "border-transparent text-muted"}`}>
-                Deezer
-              </button>
-            </div>
-            <div className="flex gap-2">
-              <input
-                value={importQuery}
-                onChange={(e) => setImportQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && searchItunes(importQuery)}
-                placeholder="Search songs..."
-                className="flex-1 rounded-lg border border-app bg-input px-4 py-3 text-sm text-[var(--text)] outline-none"
-              />
-              <button type="button" disabled={importing} onClick={async () => { if (importSource === "itunes") await searchItunes(importQuery); else if (importSource === "musicbrainz") await searchMusicBrainz(importQuery); else await searchDeezer(importQuery); }} className="btn-primary rounded-lg px-4 py-3 text-sm font-semibold disabled:opacity-50">
-                {importing ? "..." : "Search"}
-              </button>
-            </div>
-            {importResults.length > 0 && (
-              <div className="mt-3 flex items-center justify-between border-b border-app pb-2">
-                <div className="flex gap-2 text-sm text-muted">
-                  <button type="button" onClick={selectAll} className="hover:text-[var(--text)]">Select All</button>
-                  <span>|</span>
-                  <button type="button" onClick={deselectAll} className="hover:text-[var(--text)]">Deselect All</button>
-                  <span className="ml-2 text-[var(--accent)]">{selectedImportIds.size} selected</span>
+          )}
+
+          <div className="max-h-80 overflow-y-auto space-y-2">
+            {importResults.map((r) => (
+              <div
+                key={r.trackId}
+                onClick={() => toggleSelection(r.trackId)}
+                className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${
+                  selectedImportIds.has(r.trackId) ? "bg-[var(--accent)]/20" : "bg-white/5 hover:bg-white/10"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedImportIds.has(r.trackId)}
+                  onChange={() => {}}
+                  className="w-4 h-4 accent-[var(--accent)]"
+                />
+                <div className="w-10 h-10 rounded-lg bg-white/10 overflow-hidden shrink-0">
+                  {r.artworkUrl100 && <img src={r.artworkUrl100} alt="" className="w-full h-full object-cover" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[var(--text)] truncate">{r.trackName}</p>
+                  <p className="text-xs text-[var(--muted)] truncate">{r.artistName}</p>
                 </div>
                 <button
                   type="button"
-                  disabled={selectedImportIds.size === 0 || bulkImporting}
-                  onClick={bulkImportSelected}
-                  className="btn-primary rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50"
+                  onClick={(e) => { e.stopPropagation(); importFromItunes(r); }}
+                  className="shrink-0 text-xs text-[var(--accent)] hover:underline"
                 >
-                  {bulkImporting ? "Importing..." : `Import ${selectedImportIds.size} Songs`}
+                  Single
                 </button>
               </div>
+            ))}
+            {importResults.length === 0 && !importing && (
+              <div className="text-center text-sm text-[var(--muted)]">Search for songs to import.</div>
             )}
-            <div className="mt-4 max-h-80 space-y-2 overflow-auto pr-2">
-              {importResults.map((r) => (
-                <div
-                  key={r.trackId}
-                  className={`flex items-center gap-3 rounded-lg border border-app p-3 cursor-pointer transition ${
-                    selectedImportIds.has(r.trackId) ? "bg-[var(--accent)]/10" : "bg-input"
-                  }`}
-                  onClick={() => toggleSelection(r.trackId)}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedImportIds.has(r.trackId)}
-                    onChange={() => {}}
-                    className="h-4 w-4 rounded"
-                  />
-                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-panel2">
-                    {r.artworkUrl100 && <img src={r.artworkUrl100} alt="" className="h-full w-full object-cover" />}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium text-[var(--text)]">{r.trackName}</div>
-                    <div className="truncate text-xs text-muted">{r.artistName}</div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); importFromItunes(r); }}
-                    className="shrink-0 btn-secondary rounded-lg px-3 py-2 text-xs font-semibold"
-                  >
-                    Single
-                  </button>
-                </div>
-              ))}
-              {importResults.length === 0 && !importing && (
-                <div className="text-center text-sm text-muted">Search for songs to import from iTunes.</div>
-              )}
-            </div>
           </div>
         </div>
-      )}
+      </AdminModal>
     </div>
   );
 }

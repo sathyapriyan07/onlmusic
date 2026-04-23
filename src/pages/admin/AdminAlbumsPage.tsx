@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "../../lib/supabaseClient";
 import type { Album, Artist, Song } from "../../lib/types";
 import { listAlbums, listArtists, listSongs } from "../../lib/db";
 import { resolveImageSrc } from "../../lib/images";
+import { AdminCard, AdminModal, FormField, FormActions, AdminButton, AdminEmpty } from "../../components/admin/AdminComponents";
+import { Plus, Search, Edit2, Trash2, Upload, X, Music } from "lucide-react";
 
 const BUCKET = "album-covers";
 
@@ -29,6 +31,8 @@ export default function AdminAlbumsPage() {
   const [artistIds, setArtistIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [allSongs, setAllSongs] = useState<Song[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const coverFileRef = useRef<HTMLInputElement>(null);
 
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [importQuery, setImportQuery] = useState("");
@@ -129,7 +133,6 @@ export default function AdminAlbumsPage() {
 
       if (!albumId) throw new Error("Missing album id.");
 
-      // Replace album artists junction
       await supabase.from("album_artists").delete().eq("album_id", albumId);
       if (artistIds.length) {
         const { error } = await supabase.from("album_artists").insert(
@@ -308,247 +311,336 @@ export default function AdminAlbumsPage() {
     });
   }
 
-  function selectAll() {
-    setSelectedImportIds(new Set(importResults.map((r) => r.collectionId)));
-  }
-
-  function deselectAll() {
-    setSelectedImportIds(new Set());
-  }
+  const filteredAlbums = albums.filter(a =>
+    a.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const sortedArtists = useMemo(() => [...artists].sort((a, b) => a.name.localeCompare(b.name)), [artists]);
 
   return (
-    <div className="space-y-4">
+    <div>
       <Helmet>
-        <title>Admin Albums · ONL Music Discovery</title>
+        <title>Albums · Admin</title>
       </Helmet>
 
-      <div className="rounded-xl border border-app bg-panel p-4 sm:p-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-lg font-semibold text-[var(--text)]">Albums</h1>
-            <p className="mt-1 text-sm text-muted">CRUD albums and assign multiple artists.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => { setImportSource("itunes"); setImportModalOpen(true); }} className="btn-secondary rounded-xl px-3 py-2 sm:px-4 sm:py-3 text-sm text-[var(--text)] hover:bg-white/10">
-              iTunes
-            </button>
-            <button type="button" onClick={() => { setImportSource("deezer"); setImportModalOpen(true); }} className="btn-secondary rounded-xl px-3 py-2 sm:px-4 sm:py-3 text-sm text-[var(--text)] hover:bg-white/10">
-              Deezer
-            </button>
-            <button type="button" onClick={resetForm} className="rounded-2xl border border-app bg-panel2 px-4 py-3 text-sm text-[var(--text)] hover:bg-white/10">
-              New album
-            </button>
-          </div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--text)]">Albums</h1>
+          <p className="text-sm text-[var(--muted)] mt-1">Manage your album catalog</p>
         </div>
-
-        {err ? <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">{err}</div> : null}
-
-        <div className="mt-5 grid gap-3 lg:grid-cols-2">
-          <div className="rounded-xl border border-app bg-panel2 p-3 sm:p-4">
-            <div className="text-sm font-semibold text-[var(--text)]">{editing ? "Edit album" : "Create album"}</div>
-            <div className="mt-3 space-y-3">
-              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" className="w-full rounded-lg border border-app bg-black/30 px-3 py-2.5 sm:px-4 sm:py-3 text-sm text-[var(--text)] outline-none" />
-              <input value={releaseYear} onChange={(e) => setReleaseYear(e.target.value)} placeholder="Release year (optional)" className="w-full rounded-lg border border-app bg-black/30 px-3 py-2.5 sm:px-4 sm:py-3 text-sm text-[var(--text)] outline-none" />
-              <input value={coverUrl} onChange={(e) => setCoverUrl(e.target.value)} placeholder="Cover URL (optional)" className="w-full rounded-lg border border-app bg-black/30 px-3 py-2.5 sm:px-4 sm:py-3 text-sm text-[var(--text)] outline-none" />
-              <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)} className="w-full rounded-lg border border-app bg-black/30 px-3 py-2.5 sm:px-4 sm:py-3 text-sm text-[var(--text)] file:mr-2 file:rounded-full file:border-0 file:bg-white file:px-2 file:py-1.5 sm:file:px-3 sm:file:py-2 file:text-xs sm:file:text-sm file:font-semibold file:text-black" />
-
-              <div className="rounded-lg border border-app bg-black/20 p-2.5 sm:p-3">
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Album artists</div>
-                <div className="max-h-32 sm:max-h-44 space-y-2 overflow-auto pr-1">
-                  {sortedArtists.map((a) => (
-                    <label key={a.id} className="flex items-center gap-2 text-sm text-[var(--text)]">
-                      <input
-                        type="checkbox"
-                        checked={artistIds.includes(a.id)}
-                        onChange={(e) => {
-                          setArtistIds((prev) => (e.target.checked ? [...prev, a.id] : prev.filter((x) => x !== a.id)));
-                        }}
-                      />
-                      <span className="truncate">{a.name}</span>
-                    </label>
-                  ))}
-                  {sortedArtists.length === 0 ? <div className="text-sm text-muted">Create artists first.</div> : null}
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <button type="button" disabled={saving} onClick={save} className="btn-primary rounded-full px-4 py-3 text-sm font-semibold disabled:opacity-50">
-                  {saving ? "Saving…" : "Save"}
-                </button>
-                {editing ? (
-                  <button type="button" onClick={resetForm} className="rounded-full bg-black/30 px-4 py-3 text-sm text-[var(--text)] hover:bg-black/40">
-                    Cancel
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-app bg-panel2 p-3 sm:p-4">
-            <div className="text-sm font-semibold text-[var(--text)]">Existing</div>
-            {loading ? (
-              <div className="mt-3 text-sm text-muted">Loading…</div>
-            ) : (
-              <div className="mt-3 max-h-[400px] sm:max-h-[520px] space-y-2 overflow-auto pr-2">
-                {albums.map((a) => (
-                  <div key={a.id} className="flex items-start justify-between gap-2 rounded-lg border border-app bg-black/20 px-2.5 py-2 sm:px-3 sm:py-2">
-                    <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-                      <div className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 overflow-hidden rounded-lg sm:rounded-xl bg-black/20">
-                        {a.cover_url || a.cover_file_path ? (
-                          <img
-                            src={resolveImageSrc({ url: a.cover_url, filePath: a.cover_file_path, bucket: BUCKET })}
-                            alt=""
-                            className="h-full w-full object-cover"
-                          />
-                        ) : null}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-medium text-[var(--text)]">{a.title}</div>
-                        {a.release_year ? <div className="text-xs text-muted">{a.release_year}</div> : null}
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 flex-wrap gap-1.5 sm:flex-nowrap">
-                      <button type="button" onClick={() => openAssignSongs(a)} className="rounded-lg border border-app bg-panel2 px-2 py-1 text-xs text-[var(--text)] hover:bg-white/10">
-                        + Songs
-                      </button>
-                      <button type="button" onClick={() => startEdit(a)} className="rounded-lg border border-app bg-panel2 px-2 py-1 text-xs text-[var(--text)] hover:bg-white/10">
-                        Edit
-                      </button>
-                      <button type="button" onClick={() => del(a.id)} className="rounded-lg border border-red-500/30 bg-red-500/10 px-2 py-1 text-xs text-red-200 hover:bg-red-500/20">
-                        Del
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                {albums.length === 0 ? <div className="text-sm text-muted">No albums yet.</div> : null}
-              </div>
-            )}
-          </div>
+        <div className="flex gap-2">
+          <AdminButton variant="secondary" onClick={() => { setImportSource("itunes"); setImportModalOpen(true); }}>
+            <Search className="w-4 h-4 mr-2" /> Import
+          </AdminButton>
+          <AdminButton onClick={resetForm}>
+            <Plus className="w-4 h-4 mr-2" /> Add Album
+          </AdminButton>
         </div>
       </div>
 
-      {importModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4 overflow-auto">
-          <div className="w-full max-w-2xl rounded-2xl border border-app bg-panel p-4 sm:p-6 my-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-[var(--text)]">iTunes Import</h2>
-              <button type="button" onClick={() => setImportModalOpen(false)} className="text-muted hover:text-[var(--text)]">
-                ✕
-              </button>
-            </div>
-            <div className="mt-4 flex gap-2">
-              <input
-                value={importQuery}
-                onChange={(e) => setImportQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && doSearch()}
-                placeholder="Search albums..."
-                className="flex-1 rounded-lg border border-app bg-input px-4 py-3 text-sm text-[var(--text)] outline-none"
-              />
-              <button type="button" disabled={importing} onClick={doSearch} className="btn-primary rounded-lg px-4 py-3 text-sm font-semibold disabled:opacity-50">
-                {importing ? "..." : "Search"}
-              </button>
-            </div>
-            {importResults.length > 0 && (
-              <div className="mt-3 flex items-center justify-between border-b border-app pb-2">
-                <div className="flex gap-2 text-sm text-muted">
-                  <button type="button" onClick={selectAll} className="hover:text-[var(--text)]">Select All</button>
-                  <span>|</span>
-                  <button type="button" onClick={deselectAll} className="hover:text-[var(--text)]">Deselect All</button>
-                  <span className="ml-2 text-[var(--accent)]">{selectedImportIds.size} selected</span>
-                </div>
-                <button
-                  type="button"
-                  disabled={selectedImportIds.size === 0 || bulkImporting}
-                  onClick={bulkImportSelected}
-                  className="btn-primary rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50"
-                >
-                  {bulkImporting ? "Importing..." : `Import ${selectedImportIds.size} Albums`}
-                </button>
-              </div>
-            )}
-            <div className="mt-4 max-h-80 space-y-2 overflow-auto pr-2">
-              {importResults.map((r) => (
-                <div
-                  key={r.collectionId}
-                  className={`flex items-center gap-3 rounded-lg border border-app p-3 cursor-pointer transition ${
-                    selectedImportIds.has(r.collectionId) ? "bg-[var(--accent)]/10" : "bg-input"
-                  }`}
-                  onClick={() => toggleSelection(r.collectionId)}
-                >
-                  <input type="checkbox" checked={selectedImportIds.has(r.collectionId)} onChange={() => {}} className="h-4 w-4 rounded" />
-                  <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-panel2">
-                    {r.artworkUrl100 && <img src={r.artworkUrl100} alt="" className="h-full w-full object-cover" />}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium text-[var(--text)]">{r.collectionName}</div>
-                    <div className="truncate text-xs text-muted">{r.artistName}</div>
-                  </div>
-                  <button type="button" onClick={(e) => { e.stopPropagation(); importFromItunes(r); }} className="shrink-0 btn-secondary rounded-lg px-3 py-2 text-xs font-semibold">
-                    Single
-                  </button>
-                </div>
-              ))}
-              {importResults.length === 0 && !importing && (
-                <div className="text-center text-sm text-muted">Search for albums to import from iTunes.</div>
-              )}
-            </div>
-          </div>
+      {err && (
+        <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+          {err}
         </div>
       )}
 
-      {assignSongsModalOpen && assigningAlbum && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4 overflow-auto">
-          <div className="w-full max-w-2xl rounded-2xl border border-app bg-panel p-4 sm:p-6 my-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-[var(--text)]">Assign Songs to "{assigningAlbum.title}"</h2>
-              <button type="button" onClick={() => setAssignSongsModalOpen(false)} className="text-muted hover:text-[var(--text)]">
-                ✕
-              </button>
-            </div>
-            <div className="mt-4 flex items-center justify-between border-b border-app pb-2">
-              <div className="flex gap-2 text-sm text-muted">
-                <button type="button" onClick={() => selectAllSongs(allSongs)} className="hover:text-[var(--text)]">Select All</button>
-                <span>|</span>
-                <button type="button" onClick={deselectAllSongs} className="hover:text-[var(--text)]">Deselect All</button>
-                <span className="ml-2 text-[var(--accent)]">{selectedSongIds.size} selected</span>
-              </div>
-              <button
-                type="button"
-                disabled={selectedSongIds.size === 0 || assigningSongs}
-                onClick={assignSongsToAlbum}
-                className="btn-primary rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50"
-              >
-                {assigningSongs ? "Assigning..." : `Assign ${selectedSongIds.size} Songs`}
-              </button>
-            </div>
-            <div className="mt-4 max-h-80 space-y-2 overflow-auto pr-2">
-              {allSongs.map((s) => (
-                <div
-                  key={s.id}
-                  className={`flex items-center gap-3 rounded-lg border border-app p-3 cursor-pointer transition ${
-                    selectedSongIds.has(s.id) ? "bg-[var(--accent)]/10" : "bg-input"
-                  }`}
-                  onClick={() => toggleSongSelection(s.id)}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Form Card */}
+        <AdminCard title={editing ? "Edit Album" : "Add New Album"}>
+          <div className="space-y-4">
+            <FormField label="Album Title">
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter album title"
+                className="w-full px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none focus:border-[var(--accent)] transition-colors"
+              />
+            </FormField>
+
+            <FormField label="Release Year">
+              <input
+                value={releaseYear}
+                onChange={(e) => setReleaseYear(e.target.value)}
+                placeholder="e.g. 2024"
+                className="w-full px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none focus:border-[var(--accent)] transition-colors"
+              />
+            </FormField>
+
+            <FormField label="Cover Image">
+              <div className="flex items-center gap-4">
+                <input
+                  type="file"
+                  ref={coverFileRef}
+                  accept="image/*"
+                  onChange={(e) => setCoverFile(e.target.files?.[0] ?? null)}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => coverFileRef.current?.click()}
+                  className="flex items-center justify-center w-20 h-20 rounded-xl border-2 border-dashed border-app hover:border-[var(--accent)] transition-colors"
                 >
-                  <input type="checkbox" checked={selectedSongIds.has(s.id)} onChange={() => {}} className="h-4 w-4 rounded" />
-                  <img
-                    src={resolveImageSrc({ url: s.cover_url, filePath: s.cover_file_path, bucket: "song-covers" })}
-                    alt=""
-                    className="h-10 w-10 shrink-0 rounded-lg object-cover"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium text-[var(--text)]">{s.title}</div>
-                    <div className="truncate text-xs text-muted">{s.year}</div>
+                  <Upload className="w-6 h-6 text-[var(--muted)]" />
+                </button>
+                {(coverFile || coverUrl || editing?.cover_url || editing?.cover_file_path) && (
+                  <div className="relative">
+                    <img
+                      src={coverFile ? URL.createObjectURL(coverFile) : resolveImageSrc({
+                        url: coverUrl || (editing?.cover_url ?? undefined),
+                        filePath: editing?.cover_file_path ?? undefined,
+                        bucket: BUCKET
+                      })}
+                      alt=""
+                      className="w-20 h-20 rounded-xl object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => { setCoverFile(null); setCoverUrl(""); }}
+                      className="absolute -top-2 -right-2 p-1 bg-red-500 rounded-full"
+                    >
+                      <X className="w-3 h-3 text-white" />
+                    </button>
+                  </div>
+                )}
+              </div>
+              <input
+                value={coverUrl}
+                onChange={(e) => setCoverUrl(e.target.value)}
+                placeholder="Or paste cover URL"
+                className="w-full mt-3 px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none focus:border-[var(--accent)] transition-colors"
+              />
+            </FormField>
+
+            <FormField label="Album Artists">
+              <div className="max-h-44 overflow-y-auto space-y-2 pr-1">
+                {sortedArtists.map((a) => (
+                  <label key={a.id} className="flex items-center gap-3 p-2 rounded-lg bg-white/5 hover:bg-white/10 cursor-pointer transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={artistIds.includes(a.id)}
+                      onChange={(e) => {
+                        setArtistIds((prev) => (e.target.checked ? [...prev, a.id] : prev.filter((x) => x !== a.id)));
+                      }}
+                      className="w-4 h-4 accent-[var(--accent)]"
+                    />
+                    <span className="text-sm text-[var(--text)] truncate">{a.name}</span>
+                  </label>
+                ))}
+                {sortedArtists.length === 0 && <div className="text-sm text-[var(--muted)]">Create artists first.</div>}
+              </div>
+            </FormField>
+
+            <FormActions>
+              <AdminButton onClick={save} disabled={saving || !title.trim()}>
+                {saving ? "Saving..." : editing ? "Update Album" : "Add Album"}
+              </AdminButton>
+              {editing && <AdminButton variant="secondary" onClick={resetForm}>Cancel</AdminButton>}
+            </FormActions>
+          </div>
+        </AdminCard>
+
+        {/* List Card */}
+        <AdminCard
+          title={`Albums (${filteredAlbums.length})`}
+          action={
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search..."
+              className="px-3 py-1.5 bg-white/5 border border-app rounded-lg text-sm text-[var(--text)] outline-none"
+            />
+          }
+        >
+          {loading ? (
+            <div className="py-8 text-center text-[var(--muted)]">Loading...</div>
+          ) : filteredAlbums.length === 0 ? (
+            <AdminEmpty title="No albums found" description="Add your first album to get started" />
+          ) : (
+            <div className="max-h-[500px] overflow-y-auto space-y-2">
+              {filteredAlbums.map((a) => (
+                <div
+                  key={a.id}
+                  className="flex items-center gap-4 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-white/10 overflow-hidden shrink-0">
+                    {a.cover_url || a.cover_file_path ? (
+                      <img
+                        src={resolveImageSrc({ url: a.cover_url, filePath: a.cover_file_path, bucket: BUCKET })}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Music className="w-5 h-5 text-[var(--muted)]" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-[var(--text)] truncate">{a.title}</p>
+                    {a.release_year && <p className="text-xs text-[var(--muted)]">{a.release_year}</p>}
+                  </div>
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => openAssignSongs(a)}
+                      className="p-2 rounded-lg bg-white/10 text-[var(--muted)] hover:text-[var(--text)]"
+                      title="Assign Songs"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => startEdit(a)}
+                      className="p-2 rounded-lg bg-white/10 text-[var(--muted)] hover:text-[var(--text)]"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => del(a.id)}
+                      className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               ))}
-              {allSongs.length === 0 && <div className="text-center text-sm text-muted">No songs available.</div>}
             </div>
+          )}
+        </AdminCard>
+      </div>
+
+      {/* Import Modal */}
+      <AdminModal open={importModalOpen} onClose={() => setImportModalOpen(false)} title="Import Albums">
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setImportSource("itunes")}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                importSource === "itunes" ? "bg-[var(--accent)] text-black" : "bg-white/10 text-[var(--text)]"
+              }`}
+            >
+              iTunes
+            </button>
+            <button
+              onClick={() => setImportSource("deezer")}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                importSource === "deezer" ? "bg-[var(--accent)] text-black" : "bg-white/10 text-[var(--text)]"
+              }`}
+            >
+              Deezer
+            </button>
+          </div>
+
+          <div className="flex gap-2">
+            <input
+              value={importQuery}
+              onChange={(e) => setImportQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && doSearch()}
+              placeholder="Search albums..."
+              className="flex-1 px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none"
+            />
+            <AdminButton onClick={doSearch} disabled={importing}>
+              {importing ? "..." : <Search className="w-4 h-4" />}
+            </AdminButton>
+          </div>
+
+          {importResults.length > 0 && (
+            <div className="flex items-center justify-between py-2 border-b border-app">
+              <div className="text-sm text-[var(--muted)]">
+                <button onClick={() => setSelectedImportIds(new Set(importResults.map(r => r.collectionId)))} className="hover:text-[var(--text)] mr-3">
+                  Select All
+                </button>
+                <span className="text-[var(--accent)]">{selectedImportIds.size} selected</span>
+              </div>
+              <AdminButton onClick={bulkImportSelected} disabled={selectedImportIds.size === 0 || bulkImporting}>
+                {bulkImporting ? "Importing..." : "Import"}
+              </AdminButton>
+            </div>
+          )}
+
+          <div className="max-h-80 overflow-y-auto space-y-2">
+            {importResults.map((r) => (
+              <div
+                key={r.collectionId}
+                onClick={() => toggleSelection(r.collectionId)}
+                className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${
+                  selectedImportIds.has(r.collectionId) ? "bg-[var(--accent)]/20" : "bg-white/5 hover:bg-white/10"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedImportIds.has(r.collectionId)}
+                  onChange={() => {}}
+                  className="w-4 h-4 accent-[var(--accent)]"
+                />
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-white/10">
+                  {r.artworkUrl100 && <img src={r.artworkUrl100} alt="" className="h-full w-full object-cover" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-medium text-[var(--text)]">{r.collectionName}</div>
+                  <div className="truncate text-xs text-[var(--muted)]">{r.artistName}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); importFromItunes(r); }}
+                  className="shrink-0 px-3 py-1.5 rounded-full bg-white/10 text-xs font-medium text-[var(--text)] hover:bg-white/20 transition-colors"
+                >
+                  Single
+                </button>
+              </div>
+            ))}
           </div>
         </div>
-      )}
+      </AdminModal>
+
+      {/* Assign Songs Modal */}
+      <AdminModal open={assignSongsModalOpen} onClose={() => setAssignSongsModalOpen(false)} title={`Assign Songs to "${assigningAlbum?.title}"`}>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between py-2 border-b border-app">
+            <div className="text-sm text-[var(--muted)]">
+              <button onClick={() => selectAllSongs(allSongs)} className="hover:text-[var(--text)] mr-3">
+                Select All
+              </button>
+              <button onClick={deselectAllSongs} className="hover:text-[var(--text)]">
+                Deselect All
+              </button>
+              <span className="ml-2 text-[var(--accent)]">{selectedSongIds.size} selected</span>
+            </div>
+            <AdminButton onClick={assignSongsToAlbum} disabled={selectedSongIds.size === 0 || assigningSongs}>
+              {assigningSongs ? "Assigning..." : "Assign"}
+            </AdminButton>
+          </div>
+
+          <div className="max-h-80 overflow-y-auto space-y-2">
+            {allSongs.map((s) => (
+              <div
+                key={s.id}
+                onClick={() => toggleSongSelection(s.id)}
+                className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${
+                  selectedSongIds.has(s.id) ? "bg-[var(--accent)]/20" : "bg-white/5 hover:bg-white/10"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedSongIds.has(s.id)}
+                  onChange={() => {}}
+                  className="w-4 h-4 accent-[var(--accent)]"
+                />
+                <img
+                  src={resolveImageSrc({ url: s.cover_url, filePath: s.cover_file_path, bucket: "song-covers" })}
+                  alt=""
+                  className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-medium text-[var(--text)]">{s.title}</div>
+                  <div className="truncate text-xs text-[var(--muted)]">{s.year}</div>
+                </div>
+              </div>
+            ))}
+            {allSongs.length === 0 && (
+              <div className="text-center text-sm text-[var(--muted)] py-8">No songs available.</div>
+            )}
+          </div>
+        </div>
+      </AdminModal>
     </div>
   );
 }

@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Helmet } from "react-helmet-async";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import type { Artist } from "../../lib/types";
 import { listArtists } from "../../lib/db";
 import { resolveImageSrc } from "../../lib/images";
+import { AdminCard, AdminModal, FormField, FormActions, AdminButton, AdminEmpty } from "../../components/admin/AdminComponents";
+import { Plus, Search, Edit2, Trash2, Upload, X, Mic2 } from "lucide-react";
 
 const BUCKET = "artist-images";
 
@@ -14,15 +17,20 @@ interface ItunesArtist {
 }
 
 export default function AdminArtistsPage() {
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [artists, setArtists] = useState<Artist[]>([]);
+  
+  const [showForm, setShowForm] = useState(searchParams.get("new") === "1");
   const [editing, setEditing] = useState<Artist | null>(null);
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const imageFileRef = useRef<HTMLInputElement>(null);
 
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [importQuery, setImportQuery] = useState("");
@@ -31,11 +39,6 @@ export default function AdminArtistsPage() {
   const [selectedImportIds, setSelectedImportIds] = useState<Set<number>>(new Set());
   const [bulkImporting, setBulkImporting] = useState(false);
   const [importSource, setImportSource] = useState<"itunes" | "deezer">("itunes");
-
-  async function doSearch() {
-    if (importSource === "itunes") await searchItunes(importQuery);
-    else await searchDeezer(importQuery);
-  }
 
   async function refresh() {
     setLoading(true);
@@ -55,6 +58,7 @@ export default function AdminArtistsPage() {
   }, []);
 
   function resetForm() {
+    setShowForm(false);
     setEditing(null);
     setName("");
     setBio("");
@@ -68,6 +72,7 @@ export default function AdminArtistsPage() {
     setBio(a.bio ?? "");
     setImageUrl(a.image_url ?? "");
     setImageFile(null);
+    setShowForm(true);
   }
 
   async function uploadIfAny(): Promise<string | null> {
@@ -80,6 +85,7 @@ export default function AdminArtistsPage() {
   }
 
   async function save() {
+    if (!name.trim()) return;
     setSaving(true);
     setErr(null);
     try {
@@ -90,8 +96,6 @@ export default function AdminArtistsPage() {
         image_url: imageUrl.trim() || null,
         image_file_path: imageUrl.trim() ? null : filePath,
       };
-
-      if (!payload.name) throw new Error("Name is required.");
 
       if (editing) {
         const { error } = await supabase.from("artists").update(payload).eq("id", editing.id);
@@ -120,6 +124,11 @@ export default function AdminArtistsPage() {
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Failed to delete artist.");
     }
+  }
+
+  async function doSearch() {
+    if (importSource === "itunes") await searchItunes(importQuery);
+    else await searchDeezer(importQuery);
   }
 
   async function searchItunes(q: string) {
@@ -170,20 +179,6 @@ export default function AdminArtistsPage() {
     }
   }
 
-  function importFromItunes(r: ItunesArtist) {
-    const existingArtist = artists.find(
-      (a) => a.name.toLowerCase() === r.artistName.toLowerCase()
-    );
-    if (existingArtist) {
-      if (!confirm(`"${r.artistName}" already exists. Select anyway?`)) return;
-      startEdit(existingArtist);
-    } else {
-      resetForm();
-      setName(r.artistName);
-    }
-    setImportModalOpen(false);
-  }
-
   async function bulkImportSelected() {
     if (selectedImportIds.size === 0) return;
     setBulkImporting(true);
@@ -218,170 +213,245 @@ export default function AdminArtistsPage() {
     });
   }
 
-  function selectAll() {
-    setSelectedImportIds(new Set(importResults.map((r) => r.artistId)));
-  }
-
-  function deselectAll() {
-    setSelectedImportIds(new Set());
-  }
+  const filteredArtists = artists.filter(a => 
+    a.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <div className="space-y-4">
+    <div>
       <Helmet>
-        <title>Admin Artists · ONL Music Discovery</title>
+        <title>Artists · Admin</title>
       </Helmet>
 
-<div className="rounded-xl border border-app bg-panel p-4 sm:p-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-lg font-semibold text-[var(--text)]">Artists</h1>
-            <p className="mt-1 text-sm text-muted">Create, edit, delete artists. Upload an image or paste an external URL.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => { setImportSource("itunes"); setImportModalOpen(true); }} className="btn-secondary rounded-xl px-3 py-2 sm:px-4 sm:py-3 text-sm text-[var(--text)] hover:bg-white/10">
-              iTunes
-            </button>
-            <button type="button" onClick={() => { setImportSource("deezer"); setImportModalOpen(true); }} className="btn-secondary rounded-xl px-3 py-2 sm:px-4 sm:py-3 text-sm text-[var(--text)] hover:bg-white/10">
-              Deezer
-            </button>
-            <button type="button" onClick={resetForm} className="btn-secondary rounded-xl px-3 py-2 sm:px-4 sm:py-3 text-sm text-[var(--text)] hover:bg-white/10">
-              New artist
-            </button>
-          </div>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-[var(--text)]">Artists</h1>
+          <p className="text-sm text-[var(--muted)] mt-1">Manage your artist catalog</p>
         </div>
-
-        {err ? <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">{err}</div> : null}
-
-        <div className="mt-5 grid gap-3 lg:grid-cols-2">
-          <div className="rounded-xl border border-app bg-panel2 p-3 sm:p-4">
-            <div className="text-sm font-semibold text-[var(--text)]">{editing ? "Edit artist" : "Create artist"}</div>
-            <div className="mt-3 space-y-3">
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" className="w-full rounded-lg border border-app bg-black/30 px-3 py-2.5 sm:px-4 sm:py-3 text-sm text-[var(--text)] outline-none" />
-              <textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Bio" rows={3} className="w-full rounded-lg border border-app bg-black/30 px-3 py-2.5 sm:px-4 sm:py-3 text-sm text-[var(--text)] outline-none" />
-              <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="Image URL (optional)" className="w-full rounded-lg border border-app bg-black/30 px-3 py-2.5 sm:px-4 sm:py-3 text-sm text-[var(--text)] outline-none" />
-              <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] ?? null)} className="w-full rounded-lg border border-app bg-black/30 px-3 py-2.5 sm:px-4 sm:py-3 text-sm text-[var(--text)] file:mr-2 file:rounded-full file:border-0 file:bg-white file:px-2 file:py-1.5 sm:file:px-3 sm:file:py-2 file:text-xs sm:file:text-sm file:font-semibold file:text-black" />
-
-              <div className="flex gap-2">
-                <button type="button" disabled={saving} onClick={save} className="btn-primary rounded-full px-4 py-3 text-sm font-semibold disabled:opacity-50">
-                  {saving ? "Saving…" : "Save"}
-                </button>
-                {editing ? (
-                  <button type="button" onClick={resetForm} className="rounded-full bg-black/30 px-4 py-3 text-sm text-[var(--text)] hover:bg-black/40">
-                    Cancel
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-app bg-panel2 p-3 sm:p-4">
-            <div className="text-sm font-semibold text-[var(--text)]">Existing</div>
-            {loading ? (
-              <div className="mt-3 text-sm text-muted">Loading…</div>
-            ) : (
-              <div className="mt-3 max-h-[400px] sm:max-h-[520px] space-y-2 overflow-auto pr-2">
-                {artists.map((a) => (
-                  <div key={a.id} className="flex items-start justify-between gap-2 rounded-lg border border-app bg-black/20 px-2.5 py-2 sm:px-3 sm:py-2">
-                    <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-                      <div className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 overflow-hidden rounded-full bg-black/20">
-                        {a.image_url || a.image_file_path ? (
-                          <img
-                            src={resolveImageSrc({ url: a.image_url, filePath: a.image_file_path, bucket: BUCKET })}
-                            alt=""
-                            className="h-full w-full object-cover"
-                          />
-                        ) : null}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-medium text-[var(--text)]">{a.name}</div>
-                        {a.bio ? <div className="truncate text-xs text-muted">{a.bio}</div> : null}
-                      </div>
-                    </div>
-                    <div className="flex shrink-0 flex-wrap gap-1.5 sm:flex-nowrap">
-                      <button type="button" onClick={() => startEdit(a)} className="rounded-lg border border-app bg-panel2 px-2 py-1 text-xs text-[var(--text)] hover:bg-white/10">
-                        Edit
-                      </button>
-                      <button type="button" onClick={() => del(a.id)} className="rounded-lg border border-red-500/30 bg-red-500/10 px-2 py-1 text-xs text-red-200 hover:bg-red-500/20">
-                        Del
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                {artists.length === 0 ? <div className="text-sm text-muted">No artists yet.</div> : null}
-              </div>
-            )}
-          </div>
+        <div className="flex gap-2">
+          <AdminButton variant="secondary" onClick={() => { setImportSource("itunes"); setImportModalOpen(true); }}>
+            <Search className="w-4 h-4 mr-2" /> Import
+          </AdminButton>
+          <AdminButton onClick={() => { resetForm(); setShowForm(true); }}>
+            <Plus className="w-4 h-4 mr-2" /> Add Artist
+          </AdminButton>
         </div>
       </div>
 
-      {importModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-2 sm:p-4 overflow-auto">
-          <div className="w-full max-w-2xl rounded-2xl border border-app bg-panel p-4 my-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-[var(--text)]">iTunes Import</h2>
-              <button type="button" onClick={() => setImportModalOpen(false)} className="text-muted hover:text-[var(--text)]">
-                ✕
-              </button>
-            </div>
-            <div className="flex gap-2">
-              <input
-                value={importQuery}
-                onChange={(e) => setImportQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && doSearch()}
-                placeholder="Search artists..."
-                className="flex-1 rounded-lg border border-app bg-input px-3 py-2.5 text-sm text-[var(--text)] outline-none"
-              />
-              <button type="button" disabled={importing} onClick={doSearch} className="btn-primary rounded-lg px-3 py-2.5 sm:px-4 sm:py-3 text-sm font-semibold disabled:opacity-50">
-                {importing ? "..." : "Search"}
-              </button>
-            </div>
-            {importResults.length > 0 && (
-              <div className="mt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-app pb-2">
-                <div className="flex gap-2 text-sm text-muted">
-                  <button type="button" onClick={selectAll} className="hover:text-[var(--text)]">Select All</button>
-                  <span>|</span>
-                  <button type="button" onClick={deselectAll} className="hover:text-[var(--text)]">Deselect All</button>
-                  <span className="ml-2 text-[var(--accent)]">{selectedImportIds.size} selected</span>
-                </div>
-                <button
-                  type="button"
-                  disabled={selectedImportIds.size === 0 || bulkImporting}
-                  onClick={bulkImportSelected}
-                  className="btn-primary rounded-lg px-3 py-2 text-sm font-semibold disabled:opacity-50"
-                >
-                  {bulkImporting ? "Importing..." : `Import ${selectedImportIds.size} Artists`}
-                </button>
-              </div>
-            )}
-            <div className="mt-4 max-h-60 sm:max-h-80 space-y-2 overflow-auto pr-2">
-              {importResults.map((r) => (
-                <div
-                  key={r.artistId}
-                  className={`flex items-center gap-2 sm:gap-3 rounded-lg border border-app p-2.5 sm:p-3 cursor-pointer transition ${
-                    selectedImportIds.has(r.artistId) ? "bg-[var(--accent)]/10" : "bg-input"
-                  }`}
-                  onClick={() => toggleSelection(r.artistId)}
-                >
-                  <input type="checkbox" checked={selectedImportIds.has(r.artistId)} onChange={() => {}} className="h-4 w-4 rounded" />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium text-[var(--text)]">{r.artistName}</div>
-                  </div>
-                  <button type="button" onClick={(e) => { e.stopPropagation(); importFromItunes(r); }} className="shrink-0 btn-secondary rounded-lg px-3 py-2 text-xs font-semibold">
-                    Single
-                  </button>
-                </div>
-              ))}
-              {importResults.length === 0 && !importing && importQuery && !err && (
-                <div className="text-center text-sm text-muted">No artists found for "{importQuery}".</div>
-              )}
-              {importResults.length === 0 && !importing && !importQuery && (
-                <div className="text-center text-sm text-muted">Search for artists to import from iTunes.</div>
-              )}
-            </div>
-          </div>
+      {err && (
+        <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+          {err}
         </div>
       )}
+
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Form Card */}
+        <AdminCard title={editing ? "Edit Artist" : "Add New Artist"}>
+          <div className="space-y-4">
+            <FormField label="Artist Name">
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter artist name"
+                className="w-full px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none focus:border-[var(--accent)] transition-colors"
+              />
+            </FormField>
+
+            <FormField label="Bio">
+              <textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder="Artist biography (optional)"
+                rows={3}
+                className="w-full px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none focus:border-[var(--accent)] transition-colors resize-none"
+              />
+            </FormField>
+
+            <FormField label="Image">
+              <div className="flex items-center gap-4">
+                <input
+                  type="file"
+                  ref={imageFileRef}
+                  accept="image/*"
+                  onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => imageFileRef.current?.click()}
+                  className="flex items-center justify-center w-20 h-20 rounded-xl border-2 border-dashed border-app hover:border-[var(--accent)] transition-colors"
+                >
+                  <Upload className="w-6 h-6 text-[var(--muted)]" />
+                </button>
+                {(imageFile || imageUrl || editing?.image_url || editing?.image_file_path) && (
+                  <div className="relative">
+                    <img
+                      src={imageFile ? URL.createObjectURL(imageFile) : resolveImageSrc({ 
+                        url: imageUrl || (editing?.image_url ?? undefined), 
+                        filePath: editing?.image_file_path ?? undefined, 
+                        bucket: BUCKET 
+                      })}
+                      alt=""
+                      className="w-20 h-20 rounded-xl object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => { setImageFile(null); setImageUrl(""); }}
+                      className="absolute -top-2 -right-2 p-1 bg-red-500 rounded-full"
+                    >
+                      <X className="w-3 h-3 text-white" />
+                    </button>
+                  </div>
+                )}
+              </div>
+              <input
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                placeholder="Or paste image URL"
+                className="w-full mt-3 px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none focus:border-[var(--accent)] transition-colors"
+              />
+            </FormField>
+
+            <FormActions>
+              <AdminButton onClick={save} disabled={saving || !name.trim()}>
+                {saving ? "Saving..." : editing ? "Update Artist" : "Add Artist"}
+              </AdminButton>
+              {showForm && <AdminButton variant="secondary" onClick={resetForm}>Cancel</AdminButton>}
+            </FormActions>
+          </div>
+        </AdminCard>
+
+        {/* List Card */}
+        <AdminCard 
+          title={`Artists (${filteredArtists.length})`}
+          action={
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search..."
+              className="px-3 py-1.5 bg-white/5 border border-app rounded-lg text-sm text-[var(--text)] outline-none"
+            />
+          }
+        >
+          {loading ? (
+            <div className="py-8 text-center text-[var(--muted)]">Loading...</div>
+          ) : filteredArtists.length === 0 ? (
+            <AdminEmpty title="No artists found" description="Add your first artist to get started" />
+          ) : (
+            <div className="max-h-[500px] overflow-y-auto space-y-2">
+              {filteredArtists.map((a) => (
+                <div
+                  key={a.id}
+                  className="flex items-center gap-4 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group"
+                >
+                  <div className="w-12 h-12 rounded-full bg-white/10 overflow-hidden shrink-0">
+                    {a.image_url || a.image_file_path ? (
+                      <img
+                        src={resolveImageSrc({ url: a.image_url, filePath: a.image_file_path, bucket: BUCKET })}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Mic2 className="w-5 h-5 text-[var(--muted)]" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-[var(--text)] truncate">{a.name}</p>
+                    {a.bio && <p className="text-xs text-[var(--muted)] truncate">{a.bio}</p>}
+                  </div>
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => startEdit(a)}
+                      className="p-2 rounded-lg bg-white/10 text-[var(--muted)] hover:text-[var(--text)]"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => del(a.id)}
+                      className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </AdminCard>
+      </div>
+
+      {/* Import Modal */}
+      <AdminModal open={importModalOpen} onClose={() => setImportModalOpen(false)} title="Import Artists">
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setImportSource("itunes")}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                importSource === "itunes" ? "bg-[var(--accent)] text-black" : "bg-white/10 text-[var(--text)]"
+              }`}
+            >
+              iTunes
+            </button>
+            <button
+              onClick={() => setImportSource("deezer")}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                importSource === "deezer" ? "bg-[var(--accent)] text-black" : "bg-white/10 text-[var(--text)]"
+              }`}
+            >
+              Deezer
+            </button>
+          </div>
+          
+          <div className="flex gap-2">
+            <input
+              value={importQuery}
+              onChange={(e) => setImportQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && doSearch()}
+              placeholder="Search artists..."
+              className="flex-1 px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none"
+            />
+            <AdminButton onClick={doSearch} disabled={importing}>
+              {importing ? "..." : <Search className="w-4 h-4" />}
+            </AdminButton>
+          </div>
+
+          {importResults.length > 0 && (
+            <div className="flex items-center justify-between py-2 border-b border-app">
+              <div className="text-sm text-[var(--muted)]">
+                <button onClick={() => setSelectedImportIds(new Set(importResults.map(r => r.artistId)))} className="hover:text-[var(--text)] mr-3">
+                  Select All
+                </button>
+                <span className="text-[var(--accent)]">{selectedImportIds.size} selected</span>
+              </div>
+              <AdminButton onClick={bulkImportSelected} disabled={selectedImportIds.size === 0 || bulkImporting}>
+                {bulkImporting ? "Importing..." : "Import"}
+              </AdminButton>
+            </div>
+          )}
+
+          <div className="max-h-80 overflow-y-auto space-y-2">
+            {importResults.map((r) => (
+              <div
+                key={r.artistId}
+                onClick={() => toggleSelection(r.artistId)}
+                className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${
+                  selectedImportIds.has(r.artistId) ? "bg-[var(--accent)]/20" : "bg-white/5 hover:bg-white/10"
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedImportIds.has(r.artistId)}
+                  onChange={() => {}}
+                  className="w-4 h-4 accent-[var(--accent)]"
+                />
+                <span className="text-[var(--text)]">{r.artistName}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </AdminModal>
     </div>
   );
 }

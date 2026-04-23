@@ -3,6 +3,8 @@ import { Helmet } from "react-helmet-async";
 import { supabase } from "../../lib/supabaseClient";
 import type { Album, Artist, HomepageSection, HomepageSectionType, Song } from "../../lib/types";
 import { listAlbums, listArtists, listHomepageSections, listSongs } from "../../lib/db";
+import { AdminCard, FormField, FormActions, AdminButton, AdminEmpty } from "../../components/admin/AdminComponents";
+import { Edit2, Trash2 } from "lucide-react";
 
 type ItemOption = { id: string; label: string };
 
@@ -105,34 +107,58 @@ export default function AdminHomepageSectionsPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div>
       <Helmet>
         <title>Admin Homepage · ONL Music Discovery</title>
       </Helmet>
 
-      <div className="rounded-xl border border-app bg-panel p-6">
-        <h1 className="text-lg font-semibold text-[var(--text)]">Homepage sections</h1>
-        <p className="mt-1 text-sm text-muted">Create YouTube Music-style horizontal carousels on the homepage.</p>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-[var(--text)]">Homepage Sections</h1>
+        <p className="text-sm text-[var(--muted)] mt-1">Create YouTube Music-style horizontal carousels on the homepage</p>
+      </div>
 
-        {err ? <div className="mt-4 rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">{err}</div> : null}
+      {err && (
+        <div className="mb-4 p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+          {err}
+        </div>
+      )}
 
-        <div className="mt-5 grid gap-3 lg:grid-cols-2">
-          <div className="rounded-xl border border-app bg-panel2 p-4">
-            <div className="text-sm font-semibold text-[var(--text)]">{editing ? "Edit section" : "Create section"}</div>
-            <div className="mt-3 space-y-3">
-              <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title (Trending Songs, Popular Albums…)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500" />
+      <div className="grid lg:grid-cols-2 gap-6">
+        <AdminCard title={editing ? "Edit Section" : "Create Section"}>
+          <div className="space-y-4">
+            <FormField label="Title">
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Title (Trending Songs, Popular Albums…)"
+                className="w-full px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none focus:border-[var(--accent)] transition-colors"
+              />
+            </FormField>
 
-              <div className="grid grid-cols-2 gap-2">
-                <select value={type} onChange={(e) => { setType(e.target.value as HomepageSectionType); setItems([]); }} className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none">
+            <div className="grid grid-cols-2 gap-3">
+              <FormField label="Type">
+                <select
+                  value={type}
+                  onChange={(e) => { setType(e.target.value as HomepageSectionType); setItems([]); }}
+                  className="w-full px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none focus:border-[var(--accent)] transition-colors"
+                >
                   <option value="songs">Songs</option>
                   <option value="albums">Albums</option>
                   <option value="artists">Artists</option>
                 </select>
-                <input value={order} onChange={(e) => setOrder(e.target.value)} placeholder="Order (0..)" className="w-full rounded-lg border border-app bg-black/30 px-4 py-3 text-sm text-[var(--text)] outline-none placeholder:text-zinc-500" />
-              </div>
+              </FormField>
+              <FormField label="Order">
+                <input
+                  value={order}
+                  onChange={(e) => setOrder(e.target.value)}
+                  placeholder="Order (0..)"
+                  className="w-full px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none focus:border-[var(--accent)] transition-colors"
+                />
+              </FormField>
+            </div>
 
-              <div className="rounded-lg border border-app bg-black/20 p-3">
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">Items</div>
+            <FormField label="Items">
+              <div className="space-y-3">
                 <select
                   value=""
                   onChange={(e) => {
@@ -140,7 +166,7 @@ export default function AdminHomepageSectionsPage() {
                     if (!v) return;
                     setItems((prev) => (prev.includes(v) ? prev : [...prev, v]));
                   }}
-                  className="w-full rounded-lg border border-app bg-black/30 px-3 py-2 text-sm text-[var(--text)] outline-none"
+                  className="w-full px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none focus:border-[var(--accent)] transition-colors"
                 >
                   <option value="">Add item…</option>
                   {options.sort((a, b) => a.label.localeCompare(b.label)).map((o) => (
@@ -150,66 +176,82 @@ export default function AdminHomepageSectionsPage() {
                   ))}
                 </select>
 
-                <div className="mt-3 space-y-2">
+                <div className="space-y-2">
                   {items.map((id) => {
                     const label = options.find((o) => o.id === id)?.label ?? id;
                     return (
-                      <div key={id} className="flex items-center justify-between gap-3 rounded-lg border border-app bg-black/20 px-3 py-2 text-sm">
-                        <div className="min-w-0 truncate text-[var(--text)]">{label}</div>
-                        <button type="button" onClick={() => setItems((prev) => prev.filter((x) => x !== id))} className="shrink-0 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200 hover:bg-red-500/20">
+                      <div
+                        key={id}
+                        className="flex items-center justify-between gap-3 p-3 rounded-xl bg-white/5"
+                      >
+                        <div className="min-w-0 truncate text-sm text-[var(--text)]">{label}</div>
+                        <button
+                          type="button"
+                          onClick={() => setItems((prev) => prev.filter((x) => x !== id))}
+                          className="shrink-0 px-3 py-2 rounded-xl bg-red-500/20 text-red-400 text-xs hover:bg-red-500/30"
+                        >
                           Remove
                         </button>
                       </div>
                     );
                   })}
-                  {items.length === 0 ? <div className="text-sm text-muted">Add items to include in the carousel.</div> : null}
+                  {items.length === 0 ? (
+                    <p className="text-sm text-[var(--muted)]">Add items to include in the carousel</p>
+                  ) : null}
                 </div>
               </div>
+            </FormField>
 
-              <div className="flex flex-wrap gap-2">
-                <button type="button" disabled={saving} onClick={save} className="btn-primary rounded-full px-4 py-3 text-sm font-semibold disabled:opacity-50">
-                  {saving ? "Saving…" : "Save"}
-                </button>
-                {editing ? (
-                  <button type="button" onClick={resetForm} className="rounded-full bg-black/30 px-4 py-3 text-sm text-[var(--text)] hover:bg-black/40">
-                    Cancel
-                  </button>
-                ) : null}
-              </div>
-            </div>
+            <FormActions>
+              <AdminButton onClick={save} disabled={saving}>
+                {saving ? "Saving…" : "Save Section"}
+              </AdminButton>
+              {editing && (
+                <AdminButton variant="secondary" onClick={resetForm}>
+                  Cancel
+                </AdminButton>
+              )}
+            </FormActions>
           </div>
+        </AdminCard>
 
-          <div className="rounded-xl border border-app bg-panel2 p-4">
-            <div className="text-sm font-semibold text-[var(--text)]">Existing</div>
-            {loading ? (
-              <div className="mt-3 text-sm text-muted">Loading…</div>
-            ) : (
-              <div className="mt-3 max-h-[520px] space-y-2 overflow-auto pr-2">
-                {sections.map((s) => (
-                  <div key={s.id} className="rounded-lg border border-app bg-black/20 p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-medium text-[var(--text)]">{s.title}</div>
-                        <div className="mt-1 text-xs text-muted">
-                          {s.type} · order {s.order} · {s.items?.length ?? 0} items
-                        </div>
-                      </div>
-                      <div className="flex shrink-0 gap-2">
-                        <button type="button" onClick={() => startEdit(s)} className="rounded-xl border border-app bg-panel2 px-3 py-2 text-xs text-[var(--text)] hover:bg-white/10">
-                          Edit
-                        </button>
-                        <button type="button" onClick={() => del(s.id)} className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200 hover:bg-red-500/20">
-                          Delete
-                        </button>
-                      </div>
-                    </div>
+        <AdminCard title={`Sections (${sections.length})`}>
+          {loading ? (
+            <div className="py-8 text-center text-[var(--muted)]">Loading…</div>
+          ) : sections.length === 0 ? (
+            <AdminEmpty title="No sections yet" description="Create your first homepage section" />
+          ) : (
+            <div className="max-h-[500px] overflow-y-auto space-y-2">
+              {sections.map((s) => (
+                <div
+                  key={s.id}
+                  className="flex items-center gap-4 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors group"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-[var(--text)] truncate">{s.title}</p>
+                    <p className="text-xs text-[var(--muted)]">
+                      {s.type} · order {s.order} · {s.items?.length ?? 0} items
+                    </p>
                   </div>
-                ))}
-                {sections.length === 0 ? <div className="text-sm text-muted">No sections yet.</div> : null}
-              </div>
-            )}
-          </div>
-        </div>
+                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => startEdit(s)}
+                      className="p-2 rounded-lg bg-white/10 text-[var(--muted)] hover:text-[var(--text)]"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => del(s.id)}
+                      className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </AdminCard>
       </div>
     </div>
   );
