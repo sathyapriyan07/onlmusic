@@ -127,7 +127,7 @@ export default function ArtistDetailPage() {
                       className="h-10 w-10 rounded shrink-0"
                     />
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-[var(--text)] group-hover:text-[var(--accent)] truncate">{s.song.title}</div>
+                      <div className="text-sm font-medium text-[var(--text)] truncate">{s.song.title}</div>
                       {s.song.year && (
                         <div className="text-xs text-[var(--text-secondary)]">{s.song.year}</div>
                       )}
@@ -201,7 +201,6 @@ export default function ArtistDetailPage() {
                   })}
                   title={a.name}
                   variant="artist"
-                  showPlayOnHover={false}
                 />
               ))}
             </MediaRow>

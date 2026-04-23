@@ -99,7 +99,7 @@ export default function UnifiedSearch() {
         {query && (
           <button
             onClick={() => setQuery("")}
-            className="text-[var(--text-secondary)] hover:text-[var(--text)]"
+            className="text-[var(--text-secondary)]"
           >
             <X className="h-4 w-4" />
           </button>
@@ -116,7 +116,7 @@ export default function UnifiedSearch() {
                 to={`${path}/${r.id}`}
                 className={clsx(
                   "flex items-center gap-3 px-4 py-3 transition",
-                  idx === selectedIdx ? "bg-[var(--hover)]" : "hover:bg-[var(--hover)]",
+                  idx === selectedIdx ? "bg-[var(--hover)]" : "",
                 )}
               >
                 <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-[var(--hover)]">

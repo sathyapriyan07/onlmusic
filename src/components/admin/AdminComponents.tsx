@@ -35,7 +35,7 @@ export function AdminModal({ open, onClose, title, children }: AdminModalProps) 
           <h2 className="text-lg font-semibold text-[var(--text)]">{title}</h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-white/10 text-[var(--muted)] hover:text-[var(--text)] transition-colors"
+            className="p-2 rounded-full bg-white/10 text-[var(--text)]"
           >
             <X className="w-5 h-5" />
           </button>
@@ -94,9 +94,9 @@ interface AdminButtonProps {
 export function AdminButton({ variant = "primary", children, onClick, type = "button", disabled, className = "" }: AdminButtonProps) {
   const base = "px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
   const variants = {
-    primary: "bg-[var(--accent)] text-black hover:opacity-90",
-    secondary: "bg-white/10 text-[var(--text)] hover:bg-white/20",
-    danger: "bg-red-500/20 text-red-400 hover:bg-red-500/30",
+    primary: "bg-[var(--accent)] text-black",
+    secondary: "bg-white/10 text-[var(--text)]",
+    danger: "bg-red-500/20 text-red-400",
   };
   return (
     <button type={type} onClick={onClick} disabled={disabled} className={`${base} ${variants[variant]} ${className}`}>

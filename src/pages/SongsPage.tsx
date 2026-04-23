@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import MediaCard from "../components/MediaCard";
-import { SectionHeader, MediaRow } from "../components/MediaRow";
+import { SectionHeader } from "../components/MediaRow";
 import { ErrorState, EmptyState } from "../components/States";
-import { SkeletonSongCard } from "../components/Skeletons";
+import { SkeletonRow } from "../components/Skeletons";
 import { getSongArtists, listSongs } from "../lib/db";
 import type { Song } from "../lib/types";
 import { resolveImageSrc } from "../lib/images";
@@ -52,32 +52,56 @@ export default function SongsPage() {
       <SectionHeader title="Songs" />
 
       {loading ? (
-        <MediaRow>
-          {Array.from({ length: 10 }).map((_, i) => (
-            <SkeletonSongCard key={i} />
-          ))}
-        </MediaRow>
+        <div className="sm:hidden">
+          <div className="grid grid-cols-2 gap-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonRow key={i} variant="song" count={3} />
+            ))}
+          </div>
+        </div>
       ) : err ? (
         <ErrorState title="Error" message={err} />
       ) : songs.length === 0 ? (
         <EmptyState title="No songs found" message="Try a different search." />
       ) : (
-        <MediaRow>
-          {songs.map((s) => (
-            <MediaCard
-              key={s.id}
-              to={`/songs/${s.id}`}
-              image={resolveImageSrc({
-                url: s.cover_url,
-                filePath: s.cover_file_path,
-                bucket: "song-covers",
-              })}
-              title={s.title}
-              subtitle={s.subtitle}
-              variant="song"
-            />
-          ))}
-        </MediaRow>
+        <>
+          <div className="hidden sm:block">
+            <div className="media-scroll">
+              {songs.map((s) => (
+                <MediaCard
+                  key={s.id}
+                  to={`/songs/${s.id}`}
+                  image={resolveImageSrc({
+                    url: s.cover_url,
+                    filePath: s.cover_file_path,
+                    bucket: "song-covers",
+                  })}
+                  title={s.title}
+                  subtitle={s.subtitle}
+                  variant="song"
+                  size="medium"
+                />
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:hidden">
+            {songs.map((s) => (
+              <MediaCard
+                key={s.id}
+                to={`/songs/${s.id}`}
+                image={resolveImageSrc({
+                  url: s.cover_url,
+                  filePath: s.cover_file_path,
+                  bucket: "song-covers",
+                })}
+                title={s.title}
+                subtitle={s.subtitle}
+                variant="song"
+                size="small"
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

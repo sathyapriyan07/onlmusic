@@ -39,7 +39,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition",
                   isActive
                     ? "bg-[var(--hover)] text-[var(--text)]"
-                    : "text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text)]"
+                    : "text-[var(--text-secondary)] bg-[var(--hover)] text-[var(--text)]"
                 )
               }
             >
@@ -55,7 +55,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition",
                   isActive
                     ? "bg-[var(--hover)] text-[var(--text)]"
-                    : "text-[var(--text-secondary)] hover:bg-[var(--hover)] hover:text-[var(--text)]"
+                    : "text-[var(--text-secondary)] bg-[var(--hover)] text-[var(--text)]"
                 )
               }
             >
@@ -71,7 +71,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
           ) : (
             <Link
               to="/login"
-              className="inline-block text-xs font-medium text-[var(--accent)] hover:text-[var(--accent-hover)]"
+              className="inline-block text-xs font-medium text-[var(--accent)]"
             >
               Sign in
             </Link>
@@ -82,7 +82,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                 await signOut();
                 navigate("/");
               }}
-              className="mt-2 text-xs text-[var(--text-secondary)] hover:text-[var(--text)]"
+              className="mt-2 text-xs text-[var(--text-secondary)]"
             >
               Sign out
             </button>
@@ -105,7 +105,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                     "rounded-full px-4 py-2 text-sm font-medium transition",
                     isActive
                       ? "bg-[var(--hover)] text-[var(--text)]"
-                      : "text-[var(--text-secondary)] hover:text-[var(--text)]"
+                      : "text-[var(--text-secondary)]"
                   )
                 }
               >

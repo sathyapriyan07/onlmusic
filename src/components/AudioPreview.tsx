@@ -25,7 +25,7 @@ export default function AudioPreview({ src }: { src: string }) {
       <button
         type="button"
         onClick={toggle}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] transition"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent)]"
       >
         {playing ? (
           <svg className="h-3.5 w-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">

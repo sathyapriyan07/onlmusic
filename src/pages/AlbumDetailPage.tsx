@@ -88,7 +88,7 @@ export default function AlbumDetailPage() {
           {artists.length > 0 && (
             <div className="detail-subtitle flex items-center gap-2 flex-wrap">
               {artists.map((a, i) => (
-                <Link key={a.id} to={`/artists/${a.id}`} className="hover:text-[var(--accent)]">
+                <Link key={a.id} to={`/artists/${a.id}`} className="text-[var(--accent)]">
                   {a.name}
                   {i < artists.length - 1 ? ", " : ""}
                 </Link>
@@ -139,7 +139,7 @@ export default function AlbumDetailPage() {
                       className="h-10 w-10 rounded shrink-0"
                     />
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-[var(--text)] group-hover:text-[var(--accent)] truncate">{item.song.title}</div>
+                      <div className="text-sm font-medium text-[var(--text)] truncate">{item.song.title}</div>
                       {item.artists.length > 0 && (
                         <div className="text-xs text-[var(--text-secondary)] truncate">{item.artists.map((a) => a.name).join(", ")}</div>
                       )}
@@ -181,7 +181,6 @@ export default function AlbumDetailPage() {
                   image={resolveImageSrc({ url: a.imageUrl, filePath: a.imageFilePath, bucket: "artist-images" })}
                   title={a.name}
                   variant="artist"
-                  showPlayOnHover={false}
                 />
               ))}
             </MediaRow>

@@ -74,11 +74,49 @@ export default function HomePage() {
   }
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8 sm:space-y-10">
       {resolved.map((section) => (
         <section key={section.id}>
           <SectionHeader title={section.title} />
-          <MediaRow>
+          <div className="hidden sm:block">
+            <MediaRow>
+              {section.itemsResolved.map((item) => {
+                const isSong = section.type === "songs";
+                const isAlbum = section.type === "albums";
+                const variant = isSong ? "song" : isAlbum ? "album" : "artist";
+                return (
+                  <MediaCard
+                    key={item.id}
+                    to={isSong ? `/songs/${item.id}` : isAlbum ? `/albums/${item.id}` : `/artists/${item.id}`}
+                    image={resolveImageSrc({
+                      url: isSong ? (item as Song).cover_url : isAlbum ? (item as Album).cover_url : (item as Artist).image_url,
+                      filePath: isSong
+                        ? (item as Song).cover_file_path
+                        : isAlbum
+                          ? (item as Album).cover_file_path
+                          : (item as Artist).image_file_path,
+                      bucket: isSong ? "song-covers" : isAlbum ? "album-covers" : "artist-images",
+                    })}
+                    title={isSong ? (item as Song).title : isAlbum ? (item as Album).title : (item as Artist).name}
+                    subtitle={
+                      isSong
+                        ? (item as Song).year
+                          ? String((item as Song).year)
+                          : undefined
+                        : isAlbum
+                          ? (item as Album).release_year
+                            ? String((item as Album).release_year)
+                            : undefined
+                          : undefined
+                    }
+                    variant={variant}
+                    size="medium"
+                  />
+                );
+              })}
+            </MediaRow>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:hidden">
             {section.itemsResolved.map((item) => {
               const isSong = section.type === "songs";
               const isAlbum = section.type === "albums";
@@ -109,10 +147,11 @@ export default function HomePage() {
                         : undefined
                   }
                   variant={variant}
+                  size="small"
                 />
               );
             })}
-          </MediaRow>
+          </div>
         </section>
       ))}
     </div>

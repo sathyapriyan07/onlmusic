@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { Play } from "lucide-react";
 import clsx from "clsx";
 
 export type MediaCardVariant = "song" | "album" | "artist" | "video";
@@ -11,8 +10,7 @@ interface MediaCardProps {
   subtitle?: string;
   variant?: MediaCardVariant;
   duration?: string;
-  onPlay?: () => void;
-  showPlayOnHover?: boolean;
+  size?: "small" | "medium" | "large";
 }
 
 export default function MediaCard({
@@ -22,8 +20,7 @@ export default function MediaCard({
   subtitle,
   variant = "album",
   duration,
-  onPlay,
-  showPlayOnHover = true,
+  size = "medium",
 }: MediaCardProps) {
   const aspectClasses = {
     song: "aspect-square",
@@ -33,55 +30,45 @@ export default function MediaCard({
   };
 
   const sizeClasses = {
-    song: "w-44",
-    album: "w-48",
-    artist: "w-36",
-    video: "w-64",
+    small: {
+      song: "w-32 sm:w-40",
+      album: "w-36 sm:w-44",
+      artist: "w-28 sm:w-36",
+      video: "w-48 sm:w-64",
+    },
+    medium: {
+      song: "w-36 sm:w-44",
+      album: "w-40 sm:w-48",
+      artist: "w-32 sm:w-40",
+      video: "w-56 sm:w-72",
+    },
+    large: {
+      song: "w-40 sm:w-48 md:w-52",
+      album: "w-44 sm:w-52 md:w-56",
+      artist: "w-36 sm:w-44",
+      video: "w-64 sm:w-80",
+    },
   };
 
-  const handlePlayClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (onPlay) onPlay();
-  };
+  const roundedStyle = variant === "artist" ? { borderRadius: "50%", width: sizeClasses[size].artist } : undefined;
+  const defaultStyle = variant !== "artist" ? { width: sizeClasses[size][variant] } : undefined;
 
   return (
-    <Link
-      to={to}
-      className={clsx(
-        "group block media-card",
-        variant === "artist" ? "" : sizeClasses[variant]
-      )}
-      style={variant === "artist" ? { width: "9rem" } : undefined}
-    >
+    <Link to={to} className="block shrink-0" style={roundedStyle || defaultStyle}>
       <div
         className={clsx(
-          "relative overflow-hidden bg-[var(--elevated)] media-card-hover",
+          "relative overflow-hidden bg-[var(--elevated)]",
           aspectClasses[variant]
         )}
         style={variant === "artist" ? { borderRadius: "50%" } : { borderRadius: "8px" }}
       >
         {image ? (
-          <>
-            <img
-              src={image}
-              loading="lazy"
-              alt=""
-              className="h-full w-full object-cover"
-            />
-            {showPlayOnHover && variant !== "artist" && (
-              <div className="play-overlay">
-                <button
-                  type="button"
-                  onClick={handlePlayClick}
-                  className="play-button"
-                  aria-label="Play"
-                >
-                  <Play className="h-5 w-5 text-white fill-white" />
-                </button>
-              </div>
-            )}
-          </>
+          <img
+            src={image}
+            loading="lazy"
+            alt=""
+            className="h-full w-full object-cover"
+          />
         ) : (
           <div className="h-full w-full bg-[var(--elevated)]" />
         )}
@@ -93,8 +80,8 @@ export default function MediaCard({
         )}
       </div>
 
-      <div className="mt-3 px-1">
-        <div className="line-clamp-2 text-sm font-medium text-[var(--text)] group-hover:text-[var(--accent)]">
+      <div className="mt-2 sm:mt-3 px-1">
+        <div className="line-clamp-2 text-xs sm:text-sm font-medium text-[var(--text)]">
           {title}
         </div>
         {subtitle && (

@@ -122,7 +122,7 @@ export default function SongDetailPage() {
           {artists.length > 0 && (
             <div className="detail-subtitle flex items-center gap-2 flex-wrap">
               {artists.map((a, i) => (
-                <Link key={a.id} to={`/artists/${a.id}`} className="hover:text-[var(--accent)]">
+                <Link key={a.id} to={`/artists/${a.id}`} className="text-[var(--accent)]">
                   {a.name}
                   {i < artists.length - 1 ? ", " : ""}
                 </Link>
@@ -130,7 +130,7 @@ export default function SongDetailPage() {
               {album && (
                 <>
                   <span className="text-[var(--text-dim)]">·</span>
-                  <Link to={`/albums/${album.id}`} className="hover:text-[var(--accent)]">{album.title}</Link>
+                  <Link to={`/albums/${album.id}`} className="text-[var(--accent)]">{album.title}</Link>
                 </>
               )}
               {song.year && (
@@ -247,7 +247,7 @@ export default function SongDetailPage() {
                 <Link
                   key={`${a.id}-${a.role}`}
                   to={`/artists/${a.id}`}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-[var(--elevated)] hover:bg-[var(--hover)] transition"
+                  className="flex items-center gap-3 p-3 rounded-lg bg-[var(--elevated)]"
                 >
                   <img
                     src={resolveImageSrc({ url: a.imageUrl ?? undefined, filePath: a.imageFilePath ?? undefined, bucket: "artist-images" })}
