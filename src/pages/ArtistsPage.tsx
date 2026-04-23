@@ -68,7 +68,6 @@ export default function ArtistsPage() {
                   })}
                   title={a.name}
                   variant="artist"
-                  size="medium"
                 />
               ))}
             </div>
@@ -85,7 +84,6 @@ export default function ArtistsPage() {
                 })}
                 title={a.name}
                 variant="artist"
-                size="small"
               />
             ))}
           </div>

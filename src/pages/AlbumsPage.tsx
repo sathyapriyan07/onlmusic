@@ -65,7 +65,6 @@ export default function AlbumsPage() {
                   title={a.title}
                   subtitle={a.release_year ? String(a.release_year) : undefined}
                   variant="album"
-                  size="medium"
                 />
               ))}
             </div>
@@ -79,7 +78,6 @@ export default function AlbumsPage() {
                 title={a.title}
                 subtitle={a.release_year ? String(a.release_year) : undefined}
                 variant="album"
-                size="small"
               />
             ))}
           </div>

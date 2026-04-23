@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useParams } from "react-router-dom";
 import MediaCard from "../components/MediaCard";
-import { SectionHeader, MediaRow } from "../components/MediaRow";
+import { SectionHeader } from "../components/MediaRow";
 import LinkButtons from "../components/LinkButtons";
 import { ErrorState } from "../components/States";
 import { getArtist, listArtistAlbums, listArtistSongs, listLinks, listArtists } from "../lib/db";
@@ -67,7 +67,7 @@ export default function ArtistDetailPage() {
     });
   }, [artist]);
 
-  if (loading) return <div className="p-8">Loading...</div>;
+  if (loading) return <div className="p-4 sm:p-8">Loading...</div>;
   if (err) return <ErrorState title="Error" message={err} />;
   if (!artist) return <ErrorState title="Not found" />;
 
@@ -81,22 +81,22 @@ export default function ArtistDetailPage() {
   });
 
   return (
-    <div>
+    <div className="pb-8">
       <Helmet>
         <title>{artist.name} · ONL Music</title>
       </Helmet>
 
       <div className="detail-hero items-center">
-        <div className="w-48 h-48 shrink-0 rounded-full overflow-hidden shadow-lg">
+        <div className="w-28 h-28 sm:w-36 sm:h-36 md:w-44 md:h-44 shrink-0 rounded-full overflow-hidden shadow-lg">
           <img src={image} alt="" className="h-full w-full object-cover" />
         </div>
         <div className="detail-info">
           <div className="detail-type">Artist</div>
           <h1 className="detail-title">{artist.name}</h1>
           {artist.bio && (
-            <p className="detail-subtitle max-w-xl line-clamp-2">{artist.bio}</p>
+            <p className="detail-subtitle max-w-xl line-clamp-2 text-xs sm:text-sm">{artist.bio}</p>
           )}
-          <div className="mt-4 flex items-center gap-3 text-sm text-[var(--text-secondary)]">
+          <div className="mt-2 sm:mt-4 flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-[var(--text-secondary)]">
             <span>{albums.length} albums</span>
             <span className="text-[var(--text-dim)]">·</span>
             <span>{songs.length} songs</span>
@@ -104,7 +104,7 @@ export default function ArtistDetailPage() {
         </div>
       </div>
 
-      <div className="space-y-10 pb-8">
+      <div className="space-y-6 sm:space-y-10 px-2 sm:px-0">
         {songs.length > 0 && (
           <section>
             <SectionHeader title="Top Songs" />
@@ -115,8 +115,8 @@ export default function ArtistDetailPage() {
                   to={`/songs/${s.song.id}`}
                   className="track-row group"
                 >
-                  <span className="text-[var(--text-secondary)] text-sm">{i + 1}</span>
-                  <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-[var(--text-secondary)] text-xs sm:text-sm">{i + 1}</span>
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                     <img
                       src={resolveImageSrc({
                         url: s.song.cover_url,
@@ -124,17 +124,17 @@ export default function ArtistDetailPage() {
                         bucket: "song-covers",
                       })}
                       alt=""
-                      className="h-10 w-10 rounded shrink-0"
+                      className="h-8 w-8 sm:h-10 sm:w-10 rounded shrink-0"
                     />
                     <div className="min-w-0">
-                      <div className="text-sm font-medium text-[var(--text)] truncate">{s.song.title}</div>
+                      <div className="text-xs sm:text-sm font-medium text-[var(--text)] truncate">{s.song.title}</div>
                       {s.song.year && (
-                        <div className="text-xs text-[var(--text-secondary)]">{s.song.year}</div>
+                        <div className="text-xs text-[var(--text-secondary)] hidden sm:block">{s.song.year}</div>
                       )}
                     </div>
                   </div>
                   {s.song.duration && (
-                    <span className="text-[var(--text-secondary)] text-sm">{s.song.duration}</span>
+                    <span className="text-[var(--text-secondary)] text-xs sm:text-sm hidden sm:block">{s.song.duration}</span>
                   )}
                 </Link>
               ))}
@@ -145,7 +145,26 @@ export default function ArtistDetailPage() {
         {fullAlbums.length > 0 && (
           <section>
             <SectionHeader title="Albums" />
-            <MediaRow>
+            <div className="hidden sm:block">
+              <div className="media-scroll">
+                {fullAlbums.map((a) => (
+                  <MediaCard
+                    key={a.id}
+                    to={`/albums/${a.id}`}
+                    image={resolveImageSrc({
+                      url: a.cover_url,
+                      filePath: a.cover_file_path,
+                      bucket: "album-covers",
+                    })}
+                    title={a.title}
+                    subtitle={a.release_year ? String(a.release_year) : undefined}
+                    variant="album"
+                    
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:hidden">
               {fullAlbums.map((a) => (
                 <MediaCard
                   key={a.id}
@@ -158,16 +177,36 @@ export default function ArtistDetailPage() {
                   title={a.title}
                   subtitle={a.release_year ? String(a.release_year) : undefined}
                   variant="album"
+                  
                 />
               ))}
-            </MediaRow>
+            </div>
           </section>
         )}
 
         {singlesAndEPs.length > 0 && (
           <section>
             <SectionHeader title="Singles and EPs" />
-            <MediaRow>
+            <div className="hidden sm:block">
+              <div className="media-scroll">
+                {singlesAndEPs.map((a) => (
+                  <MediaCard
+                    key={a.id}
+                    to={`/albums/${a.id}`}
+                    image={resolveImageSrc({
+                      url: a.cover_url,
+                      filePath: a.cover_file_path,
+                      bucket: "album-covers",
+                    })}
+                    title={a.title}
+                    subtitle={a.release_year ? String(a.release_year) : undefined}
+                    variant="album"
+                    
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:hidden">
               {singlesAndEPs.map((a) => (
                 <MediaCard
                   key={a.id}
@@ -180,37 +219,59 @@ export default function ArtistDetailPage() {
                   title={a.title}
                   subtitle={a.release_year ? String(a.release_year) : undefined}
                   variant="album"
+                  
                 />
               ))}
-            </MediaRow>
+            </div>
           </section>
         )}
 
         {relatedArtists.length > 0 && (
           <section>
             <SectionHeader title="Related Artists" />
-            <MediaRow>
+            <div className="hidden sm:block">
+              <div className="media-scroll">
+                {relatedArtists.map((a) => (
+                  <MediaCard
+                    key={a.id}
+                    to={`/artists/${a.id}`}
+                    image={resolveImageSrc({
+                      url: a.image_url,
+                      filePath: a.image_file_path,
+                      bucket: "artist-images",
+                    })}
+                    title={a.name}
+                    variant="artist"
+                    
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 sm:hidden">
               {relatedArtists.map((a) => (
-                <MediaCard
-                  key={a.id}
-                  to={`/artists/${a.id}`}
-                  image={resolveImageSrc({
-                    url: a.image_url,
-                    filePath: a.image_file_path,
-                    bucket: "artist-images",
-                  })}
-                  title={a.name}
-                  variant="artist"
-                />
+                <Link key={a.id} to={`/artists/${a.id}`} className="flex flex-col items-center">
+                  <img
+                    src={resolveImageSrc({
+                      url: a.image_url,
+                      filePath: a.image_file_path,
+                      bucket: "artist-images",
+                    })}
+                    alt=""
+                    className="w-16 h-16 rounded-full object-cover"
+                  />
+                  <span className="text-xs text-[var(--text)] mt-1 text-center truncate w-full">{a.name}</span>
+                </Link>
               ))}
-            </MediaRow>
+            </div>
           </section>
         )}
 
         {links.length > 0 && (
           <section>
             <SectionHeader title="Listen on" />
-            <LinkButtons links={links} />
+            <div className="flex flex-wrap gap-2">
+              <LinkButtons links={links} />
+            </div>
           </section>
         )}
       </div>

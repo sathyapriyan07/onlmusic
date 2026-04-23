@@ -79,7 +79,6 @@ export default function SongsPage() {
                   title={s.title}
                   subtitle={s.subtitle}
                   variant="song"
-                  size="medium"
                 />
               ))}
             </div>
@@ -97,7 +96,6 @@ export default function SongsPage() {
                 title={s.title}
                 subtitle={s.subtitle}
                 variant="song"
-                size="small"
               />
             ))}
           </div>

@@ -110,7 +110,6 @@ export default function HomePage() {
                           : undefined
                     }
                     variant={variant}
-                    size="medium"
                   />
                 );
               })}
@@ -147,7 +146,6 @@ export default function HomePage() {
                         : undefined
                   }
                   variant={variant}
-                  size="small"
                 />
               );
             })}

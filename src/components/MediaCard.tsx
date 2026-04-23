@@ -10,7 +10,6 @@ interface MediaCardProps {
   subtitle?: string;
   variant?: MediaCardVariant;
   duration?: string;
-  size?: "small" | "medium" | "large";
 }
 
 export default function MediaCard({
@@ -20,47 +19,22 @@ export default function MediaCard({
   subtitle,
   variant = "album",
   duration,
-  size = "medium",
 }: MediaCardProps) {
   const aspectClasses = {
     song: "aspect-square",
     album: "aspect-square",
-    artist: "aspect-square rounded-full",
+    artist: "aspect-square",
     video: "aspect-video",
   };
 
-  const sizeClasses = {
-    small: {
-      song: "w-32 sm:w-40",
-      album: "w-36 sm:w-44",
-      artist: "w-28 sm:w-36",
-      video: "w-48 sm:w-64",
-    },
-    medium: {
-      song: "w-36 sm:w-44",
-      album: "w-40 sm:w-48",
-      artist: "w-32 sm:w-40",
-      video: "w-56 sm:w-72",
-    },
-    large: {
-      song: "w-40 sm:w-48 md:w-52",
-      album: "w-44 sm:w-52 md:w-56",
-      artist: "w-36 sm:w-44",
-      video: "w-64 sm:w-80",
-    },
-  };
-
-  const roundedStyle = variant === "artist" ? { borderRadius: "50%", width: sizeClasses[size].artist } : undefined;
-  const defaultStyle = variant !== "artist" ? { width: sizeClasses[size][variant] } : undefined;
-
   return (
-    <Link to={to} className="block shrink-0" style={roundedStyle || defaultStyle}>
+    <Link to={to} className="block shrink-0">
       <div
         className={clsx(
           "relative overflow-hidden bg-[var(--elevated)]",
           aspectClasses[variant]
         )}
-        style={variant === "artist" ? { borderRadius: "50%" } : { borderRadius: "8px" }}
+        style={variant === "artist" ? { borderRadius: "50%" } : { borderRadius: variant === "video" ? "8px" : "4px" }}
       >
         {image ? (
           <img
@@ -80,12 +54,12 @@ export default function MediaCard({
         )}
       </div>
 
-      <div className="mt-2 sm:mt-3 px-1">
-        <div className="line-clamp-2 text-xs sm:text-sm font-medium text-[var(--text)]">
+      <div className="mt-2">
+        <div className="text-sm font-medium text-[var(--text)] line-clamp-1">
           {title}
         </div>
         {subtitle && (
-          <div className="line-clamp-1 text-xs text-[var(--text-secondary)] mt-0.5">
+          <div className="text-xs text-[var(--text-secondary)] line-clamp-2 mt-0.5">
             {subtitle}
           </div>
         )}
