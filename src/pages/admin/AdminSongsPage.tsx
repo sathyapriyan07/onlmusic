@@ -12,6 +12,17 @@ const BUCKET = "song-covers";
 
 type Credit = { artist_id: string; role: string };
 
+interface ItunesResult {
+  trackId: number;
+  trackName: string;
+  artistName: string;
+  collectionName: string | null;
+  releaseDate: string | null;
+  trackTimeMillis: number | null;
+  artworkUrl100: string | null;
+  previewUrl: string | null;
+}
+
 export default function AdminSongsPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -34,6 +45,13 @@ export default function AdminSongsPage() {
   const [credits, setCredits] = useState<Credit[]>([]);
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importQuery, setImportQuery] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importResults, setImportResults] = useState<ItunesResult[]>([]);
+  const [selectedImportIds, setSelectedImportIds] = useState<Set<number>>(new Set());
+  const [bulkImporting, setBulkImporting] = useState(false);
+  const [importSource, setImportSource] = useState<"itunes" | "musicbrainz" | "deezer">("itunes");
 
   async function refresh() {
     setLoading(true);
@@ -174,6 +192,156 @@ export default function AdminSongsPage() {
   const filteredSongs = songs.filter(s => 
     s.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  async function searchItunes(q: string) {
+    if (!q.trim()) return;
+    setImporting(true);
+    setErr(null);
+    try {
+      const term = encodeURIComponent(q.trim());
+      const resp = await fetch(`https://itunes.apple.com/search?term=${term}&media=music&entity=song&limit=25`);
+      const data = await resp.json();
+      const results: ItunesResult[] = (data.results ?? []).map((r: Record<string, unknown>) => ({
+        trackId: r.trackId as number,
+        trackName: r.trackName as string,
+        artistName: r.artistName as string,
+        collectionName: r.collectionName as string | null,
+        releaseDate: r.releaseDate as string | null,
+        trackTimeMillis: r.trackTimeMillis as number | null,
+        artworkUrl100: r.artworkUrl100 as string | null,
+        previewUrl: r.previewUrl as string | null,
+      }));
+      setImportResults(results);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to search iTunes.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  async function searchMusicBrainz(q: string) {
+    if (!q.trim()) return;
+    setImporting(true);
+    setErr(null);
+    try {
+      const term = encodeURIComponent(q.trim());
+      const resp = await fetch(`https://musicbrainz.org/ws/2/recording?query=${term}&type=recording&limit=25&fmt=json`, {
+        headers: { "User-Agent": "ONLMusic/1.0 (contact@onlmusic.dev)" },
+      });
+      const data = await resp.json();
+      const results: ItunesResult[] = (data.recordings ?? []).map((r: Record<string, unknown>, i: number) => ({
+        trackId: i,
+        trackName: r.title as string,
+        artistName: ((r.artist as Record<string, unknown>)?.name as string) || "Unknown",
+        collectionName: null,
+        releaseDate: null,
+        trackTimeMillis: null,
+        artworkUrl100: null,
+        previewUrl: null,
+      }));
+      setImportResults(results);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to search MusicBrainz.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  async function searchDeezer(q: string) {
+    if (!q.trim()) return;
+    setImporting(true);
+    setErr(null);
+    try {
+      const term = encodeURIComponent(q.trim());
+      const resp = await fetch(`https://api.deezer.com/search/track?q=${term}&limit=25`);
+      const data = await resp.json();
+      const results: ItunesResult[] = (data.data ?? []).map((r: Record<string, unknown>) => ({
+        trackId: r.id as number,
+        trackName: r.title as string,
+        artistName: (r.artist as Record<string, unknown>).name as string,
+        collectionName: (r.album as Record<string, unknown>)?.title as string || null,
+        releaseDate: (r.album as Record<string, unknown>)?.release_date as string || null,
+        trackTimeMillis: (r.duration as number) * 1000,
+        artworkUrl100: (r.album as Record<string, unknown>)?.cover_medium_url as string || (r.album as Record<string, unknown>)?.cover_small_url as string || null,
+        previewUrl: r.preview as string || null,
+      }));
+      setImportResults(results);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to search Deezer.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  async function importFromItunes(r: ItunesResult) {
+    const existingSong = songs.find(
+      (s) => s.title.toLowerCase() === r.trackName.toLowerCase()
+    );
+    if (existingSong) {
+      if (!confirm(`"${r.trackName}" already exists. Select anyway?`)) return;
+      await startEdit(existingSong);
+    } else {
+      resetForm();
+      setTitle(r.trackName);
+      if (r.releaseDate) {
+        setYear(r.releaseDate.slice(0, 4));
+      }
+      if (r.trackTimeMillis) {
+        const mins = Math.floor(r.trackTimeMillis / 60000);
+        const secs = Math.floor((r.trackTimeMillis % 60000) / 1000);
+        setDuration(`${mins}:${secs.toString().padStart(2, "0")}`);
+      }
+      if (r.artworkUrl100) {
+        setCoverUrl(r.artworkUrl100.replace("100x100", "600x600"));
+      }
+      if (r.previewUrl) {
+        setPreviewUrl(r.previewUrl);
+      }
+    }
+    setImportModalOpen(false);
+  }
+
+  async function bulkImportSelected() {
+    if (selectedImportIds.size === 0) return;
+    setBulkImporting(true);
+    setErr(null);
+    try {
+      const toImport = importResults.filter((r) => selectedImportIds.has(r.trackId));
+      const inserts: Array<{ title: string; year: number | null; duration: string | null; cover_url: string | null; preview_url: string | null; published: boolean }> = [];
+      for (const r of toImport) {
+        if (songs.some((s) => s.title.toLowerCase() === r.trackName.toLowerCase())) continue;
+        inserts.push({
+          title: r.trackName,
+          year: r.releaseDate ? Number(r.releaseDate.slice(0, 4)) : null,
+          duration: r.trackTimeMillis
+            ? `${Math.floor(r.trackTimeMillis / 60000)}:${Math.floor((r.trackTimeMillis % 60000) / 1000).toString().padStart(2, "0")}`
+            : null,
+          cover_url: r.artworkUrl100 ? r.artworkUrl100.replace("100x100", "600x600") : null,
+          preview_url: r.previewUrl ?? null,
+          published: true,
+        });
+      }
+      if (inserts.length > 0) {
+        const { error } = await supabase.from("songs").insert(inserts);
+        if (error) throw error;
+      }
+      setImportModalOpen(false);
+      await refresh();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Bulk import failed.");
+    } finally {
+      setBulkImporting(false);
+    }
+  }
+
+  function toggleImportSelect(id: number) {
+    setSelectedImportIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   return (
     <div>

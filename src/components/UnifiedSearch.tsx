@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import clsx from "clsx";
 import { searchAll } from "../lib/db";
 import { resolveImageSrc } from "../lib/images";
@@ -68,7 +68,7 @@ export default function UnifiedSearch() {
     return (
       <>
         {text.slice(0, idx)}
-        <mark className="bg-[var(--accent)] text-black">{text.slice(idx, idx + query.length)}</mark>
+        <mark className="bg-[var(--accent)]/30 text-[var(--text)]">{text.slice(idx, idx + query.length)}</mark>
         {text.slice(idx + query.length)}
       </>
     );
@@ -80,12 +80,12 @@ export default function UnifiedSearch() {
     return resolveImageSrc({ url: r.image, bucket: "artist-images" });
   };
 
-  const getTypeColor = (_type: string) => "text-muted";
+  const getTypeColor = (_type: string) => "text-[var(--text-secondary)]";
 
   return (
-    <div className="relative">
-      <label className="flex items-center gap-3 rounded-full border border-app bg-panel px-4 py-3">
-        <Search className="h-4 w-4 text-muted" />
+    <div className="relative w-full">
+      <div className="flex items-center gap-2 bg-[var(--elevated)] rounded-full px-4 py-2.5">
+        <Search className="h-4 w-4 text-[var(--text-secondary)]" />
         <input
           ref={inputRef}
           value={query}
@@ -94,12 +94,20 @@ export default function UnifiedSearch() {
           onBlur={() => setTimeout(() => setOpen(false), 200)}
           onKeyDown={handleKeyDown}
           placeholder="Search songs, albums, artists…"
-          className="w-full bg-transparent text-sm text-[var(--text)] outline-none placeholder:text-[var(--muted)]"
+          className="w-full bg-transparent text-sm text-[var(--text)] outline-none placeholder:text-[var(--text-secondary)]"
         />
-      </label>
+        {query && (
+          <button
+            onClick={() => setQuery("")}
+            className="text-[var(--text-secondary)] hover:text-[var(--text)]"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
 
       {open && results.length > 0 && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-80 overflow-auto rounded-2xl border border-app bg-panel">
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-96 overflow-auto rounded-xl bg-[var(--elevated)] shadow-lg">
           {results.map((r, idx) => {
             const path = r.type === "song" ? "/songs" : r.type === "album" ? "/albums" : "/artists";
             return (
@@ -108,17 +116,17 @@ export default function UnifiedSearch() {
                 to={`${path}/${r.id}`}
                 className={clsx(
                   "flex items-center gap-3 px-4 py-3 transition",
-                  idx === selectedIdx ? "bg-panel2" : "hover:bg-panel2",
+                  idx === selectedIdx ? "bg-[var(--hover)]" : "hover:bg-[var(--hover)]",
                 )}
               >
-                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-panel2">
+                <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md bg-[var(--hover)]">
                   {r.image && <img src={getImage(r)} alt="" className="h-full w-full object-cover" />}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm text-[var(--text)]">{highlightMatch(r.title)}</div>
-                  <div className="flex items-center gap-2 text-xs text-muted">
+                  <div className="flex items-center gap-2 text-xs">
                     <span className={getTypeColor(r.type)}>{r.type}</span>
-                    {r.subtitle && <span>· {r.subtitle}</span>}
+                    {r.subtitle && <span className="text-[var(--text-secondary)]">· {r.subtitle}</span>}
                   </div>
                 </div>
               </Link>

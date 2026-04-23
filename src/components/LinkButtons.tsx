@@ -39,24 +39,24 @@ export default function LinkButtons({ links }: { links: Link[] }) {
 
   if (!hasCategories && !hasUncategorized) return null;
 
+  const renderLink = (l: Link) => (
+    <a
+      key={l.id}
+      href={l.url}
+      target="_blank"
+      rel="noreferrer"
+      className="link-pill"
+    >
+      <PlatformLogo platform={l.platform} className="h-4 w-4" />
+      <span>{normalizePlatform(l.platform)}</span>
+    </a>
+  );
+
   if (!hasCategories) {
     const sorted = [...uncategorized].sort((a, b) => platformSortKey(a.platform) - platformSortKey(b.platform));
     return (
       <div className="flex flex-wrap gap-2">
-        {sorted.map((l) => (
-          <a
-            key={l.id}
-            href={l.url}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 rounded-full bg-panel2 px-3 py-2 text-sm text-[var(--text)] hover:bg-white/10"
-          >
-            <span className="text-muted">
-              <PlatformLogo platform={l.platform} className="h-4 w-4" />
-            </span>
-            {normalizePlatform(l.platform)}
-          </a>
-        ))}
+        {sorted.map(renderLink)}
       </div>
     );
   }
@@ -68,46 +68,20 @@ export default function LinkButtons({ links }: { links: Link[] }) {
         const sorted = [...catLinks].sort((a, b) => platformSortKey(a.platform) - platformSortKey(b.platform));
         return (
           <div key={category}>
-            <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">
+            <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
               {categoryLabels[category]}
             </div>
             <div className="flex flex-wrap gap-2">
-              {sorted.map((l) => (
-                <a
-                  key={l.id}
-                  href={l.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-full bg-panel2 px-3 py-2 text-sm text-[var(--text)] hover:bg-white/10"
-                >
-                  <span className="text-muted">
-                    <PlatformLogo platform={l.platform} className="h-4 w-4" />
-                  </span>
-                  {normalizePlatform(l.platform)}
-                </a>
-              ))}
+              {sorted.map(renderLink)}
             </div>
           </div>
         );
       })}
       {hasUncategorized && (
         <div>
-          <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">Other</div>
+          <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Other</div>
           <div className="flex flex-wrap gap-2">
-            {uncategorized.map((l) => (
-              <a
-                key={l.id}
-                href={l.url}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-panel2 px-3 py-2 text-sm text-[var(--text)] hover:bg-white/10"
-              >
-                <span className="text-muted">
-                  <PlatformLogo platform={l.platform} className="h-4 w-4" />
-                </span>
-                {normalizePlatform(l.platform)}
-              </a>
-            ))}
+            {uncategorized.map(renderLink)}
           </div>
         </div>
       )}

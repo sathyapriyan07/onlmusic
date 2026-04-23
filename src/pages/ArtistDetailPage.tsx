@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useParams } from "react-router-dom";
-import LinkButtons from "../components/LinkButtons";
 import MediaCard from "../components/MediaCard";
+import { SectionHeader, MediaRow } from "../components/MediaRow";
+import LinkButtons from "../components/LinkButtons";
 import { ErrorState } from "../components/States";
-import { getArtist, listArtistAlbums, listArtistSongs, listLinks } from "../lib/db";
+import { getArtist, listArtistAlbums, listArtistSongs, listLinks, listArtists } from "../lib/db";
 import type { Album, Artist, Link as LinkRow, Song } from "../lib/types";
 import { resolveImageSrc } from "../lib/images";
 
@@ -18,6 +19,7 @@ export default function ArtistDetailPage() {
   const [songs, setSongs] = useState<Array<{ song: Song; role: string }>>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
   const [links, setLinks] = useState<LinkRow[]>([]);
+  const [relatedArtists, setRelatedArtists] = useState<Artist[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -32,19 +34,22 @@ export default function ArtistDetailPage() {
           setErr("Artist not found.");
           return;
         }
-        const [songRels, albumRels, artistLinks] = await Promise.all([
+        const [songRels, albumRels, artistLinks, allArtists] = await Promise.all([
           listArtistSongs(a.id),
           listArtistAlbums(a.id),
           listLinks({ type: "artist", id: a.id }),
+          listArtists({ published: true }),
         ]);
         if (!mounted) return;
         setSongs(songRels.map((r) => ({ song: r.song, role: r.role })));
         setAlbums(albumRels.map((r) => r.album));
         setLinks(artistLinks);
+        const related = allArtists.filter((ar) => ar.id !== a.id && ar.published).slice(0, 6);
+        setRelatedArtists(related);
       } catch (e) {
         setErr(e instanceof Error ? e.message : "Failed to load artist.");
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
     run();
@@ -62,9 +67,18 @@ export default function ArtistDetailPage() {
     });
   }, [artist]);
 
-  if (loading) return <div className="p-4">Loading...</div>;
+  if (loading) return <div className="p-8">Loading...</div>;
   if (err) return <ErrorState title="Error" message={err} />;
   if (!artist) return <ErrorState title="Not found" />;
+
+  const singlesAndEPs = albums.filter((a) => {
+    const title = a.title.toLowerCase();
+    return title.includes("single") || title.includes("ep") || title.includes("ep.");
+  });
+  const fullAlbums = albums.filter((a) => {
+    const title = a.title.toLowerCase();
+    return !title.includes("single") && !title.includes("ep") && !title.includes("ep.");
+  });
 
   return (
     <div>
@@ -72,99 +86,135 @@ export default function ArtistDetailPage() {
         <title>{artist.name} · ONL Music</title>
       </Helmet>
 
-      {/* Background */}
-      <div className="fixed inset-0 -z-10">
-        {image && (
-          <>
-            <div className="absolute inset-0 bg-gradient-to-b from-[#2a2a2a] via-[#121212]/90 to-[#121212]" />
-            <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover opacity-20 blur-[100px]" />
-          </>
-        )}
-      </div>
-
-      {/* Hero */}
-      <div className="flex flex-col gap-5 pb-6 pt-4">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end">
-          <div className="h-40 w-40 shrink-0 overflow-hidden rounded-full shadow-2xl sm:h-56 sm:w-56">
-            <img src={image} alt="" className="h-full w-full object-cover" />
-          </div>
-          <div className="flex-1">
-            <div className="text-xs font-medium uppercase tracking-wider text-muted">Artist</div>
-            <h1 className="mt-1 text-3xl font-bold leading-tight text-[var(--text)] sm:text-5xl">{artist.name}</h1>
-            {artist.bio && <p className="mt-3 max-w-xl text-sm text-dimmer">{artist.bio}</p>}
+      <div className="detail-hero items-center">
+        <div className="w-48 h-48 shrink-0 rounded-full overflow-hidden shadow-lg">
+          <img src={image} alt="" className="h-full w-full object-cover" />
+        </div>
+        <div className="detail-info">
+          <div className="detail-type">Artist</div>
+          <h1 className="detail-title">{artist.name}</h1>
+          {artist.bio && (
+            <p className="detail-subtitle max-w-xl line-clamp-2">{artist.bio}</p>
+          )}
+          <div className="mt-4 flex items-center gap-3 text-sm text-[var(--text-secondary)]">
+            <span>{albums.length} albums</span>
+            <span className="text-[var(--text-dim)]">·</span>
+            <span>{songs.length} songs</span>
           </div>
         </div>
       </div>
 
-      {/* Songs */}
-      {songs.length > 0 && (
-        <section className="pb-8">
-          <h2 className="mb-4 text-lg font-bold text-[var(--text)]">Songs</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="border-b border-white/10 text-xs uppercase text-dim">
-                <tr>
-                  <th className="pb-2 font-medium">#</th>
-                  <th className="pb-2 font-medium">Title</th>
-                  <th className="pb-2 font-medium hidden sm:table-cell">Role</th>
-                </tr>
-              </thead>
-              <tbody>
-                {songs.map((s, i) => (
-                  <tr key={`${s.song.id}-${s.role}`} className="border-b border-white/5 hover:bg-white/5">
-                    <td className="py-2 pr-4 text-dim">{i + 1}</td>
-                    <td className="py-2">
-                      <Link to={`/songs/${s.song.id}`} className="flex items-center gap-3 group">
-                        <img
-                          src={resolveImageSrc({
-                            url: s.song.cover_url,
-                            filePath: s.song.cover_file_path,
-                            bucket: "song-covers",
-                          })}
-                          alt=""
-                          className="h-10 w-10 rounded shrink-0"
-                        />
-                        <span className="font-medium text-[var(--text)] group-hover:text-[var(--accent)]">{s.song.title}</span>
-                      </Link>
-                    </td>
-                    <td className="py-2 text-dim hidden sm:table-cell">{s.role}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+      <div className="space-y-10 pb-8">
+        {songs.length > 0 && (
+          <section>
+            <SectionHeader title="Top Songs" />
+            <div className="space-y-1">
+              {songs.slice(0, 10).map((s, i) => (
+                <Link
+                  key={`${s.song.id}-${s.role}`}
+                  to={`/songs/${s.song.id}`}
+                  className="track-row group"
+                >
+                  <span className="text-[var(--text-secondary)] text-sm">{i + 1}</span>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <img
+                      src={resolveImageSrc({
+                        url: s.song.cover_url,
+                        filePath: s.song.cover_file_path,
+                        bucket: "song-covers",
+                      })}
+                      alt=""
+                      className="h-10 w-10 rounded shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-[var(--text)] group-hover:text-[var(--accent)] truncate">{s.song.title}</div>
+                      {s.song.year && (
+                        <div className="text-xs text-[var(--text-secondary)]">{s.song.year}</div>
+                      )}
+                    </div>
+                  </div>
+                  {s.song.duration && (
+                    <span className="text-[var(--text-secondary)] text-sm">{s.song.duration}</span>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
-      {/* Albums */}
-      {albums.length > 0 && (
-        <section className="pb-8">
-          <h2 className="mb-4 text-lg font-bold text-[var(--text)]">Albums</h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-            {albums.map((a) => (
-              <MediaCard
-                key={a.id}
-                to={`/albums/${a.id}`}
-                image={resolveImageSrc({
-                  url: a.cover_url,
-                  filePath: a.cover_file_path,
-                  bucket: "album-covers",
-                })}
-                title={a.title}
-                subtitle={a.release_year ? String(a.release_year) : undefined}
-              />
-            ))}
-          </div>
-        </section>
-      )}
+        {fullAlbums.length > 0 && (
+          <section>
+            <SectionHeader title="Albums" />
+            <MediaRow>
+              {fullAlbums.map((a) => (
+                <MediaCard
+                  key={a.id}
+                  to={`/albums/${a.id}`}
+                  image={resolveImageSrc({
+                    url: a.cover_url,
+                    filePath: a.cover_file_path,
+                    bucket: "album-covers",
+                  })}
+                  title={a.title}
+                  subtitle={a.release_year ? String(a.release_year) : undefined}
+                  variant="album"
+                />
+              ))}
+            </MediaRow>
+          </section>
+        )}
 
-      {/* Links */}
-      {links.length > 0 && (
-        <section className="pb-8">
-          <h2 className="mb-4 text-lg font-bold text-[var(--text)]">Links</h2>
-          <LinkButtons links={links} />
-        </section>
-      )}
+        {singlesAndEPs.length > 0 && (
+          <section>
+            <SectionHeader title="Singles and EPs" />
+            <MediaRow>
+              {singlesAndEPs.map((a) => (
+                <MediaCard
+                  key={a.id}
+                  to={`/albums/${a.id}`}
+                  image={resolveImageSrc({
+                    url: a.cover_url,
+                    filePath: a.cover_file_path,
+                    bucket: "album-covers",
+                  })}
+                  title={a.title}
+                  subtitle={a.release_year ? String(a.release_year) : undefined}
+                  variant="album"
+                />
+              ))}
+            </MediaRow>
+          </section>
+        )}
+
+        {relatedArtists.length > 0 && (
+          <section>
+            <SectionHeader title="Related Artists" />
+            <MediaRow>
+              {relatedArtists.map((a) => (
+                <MediaCard
+                  key={a.id}
+                  to={`/artists/${a.id}`}
+                  image={resolveImageSrc({
+                    url: a.image_url,
+                    filePath: a.image_file_path,
+                    bucket: "artist-images",
+                  })}
+                  title={a.name}
+                  variant="artist"
+                  showPlayOnHover={false}
+                />
+              ))}
+            </MediaRow>
+          </section>
+        )}
+
+        {links.length > 0 && (
+          <section>
+            <SectionHeader title="Listen on" />
+            <LinkButtons links={links} />
+          </section>
+        )}
+      </div>
     </div>
   );
 }

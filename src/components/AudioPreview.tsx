@@ -21,25 +21,25 @@ export default function AudioPreview({ src }: { src: string }) {
   const handleEnded = () => setPlaying(false);
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-app bg-panel px-4 py-3">
+    <div className="flex items-center gap-3 bg-[var(--elevated)] rounded-full px-4 py-2">
       <button
         type="button"
         onClick={toggle}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-black hover:opacity-90"
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--accent)] hover:bg-[var(--accent-hover)] transition"
       >
         {playing ? (
-          <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+          <svg className="h-3.5 w-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
             <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
           </svg>
         ) : (
-          <svg className="h-4 w-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+          <svg className="h-3.5 w-3.5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M8 5v14l11-7z" />
           </svg>
         )}
       </button>
       <audio ref={audioRef} src={src} onEnded={handleEnded} preload="none" />
-      <div className="flex-1 text-sm text-muted">
-        {playing ? "Playing 30s preview..." : "30 second preview"}
+      <div className="flex-1 text-xs text-[var(--text-secondary)]">
+        {playing ? "Playing preview..." : "30 second preview"}
       </div>
     </div>
   );

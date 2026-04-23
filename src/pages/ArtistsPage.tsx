@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import MediaCard from "../components/MediaCard";
+import { SectionHeader, MediaRow } from "../components/MediaRow";
 import { ErrorState, EmptyState } from "../components/States";
-import { SkeletonCard } from "../components/Skeletons";
+import { SkeletonArtistCard } from "../components/Skeletons";
 import { listArtists } from "../lib/db";
 import type { Artist } from "../lib/types";
 import { resolveImageSrc } from "../lib/images";
@@ -24,7 +25,7 @@ export default function ArtistsPage() {
       } catch (e) {
         setErr(e instanceof Error ? e.message : "Failed to load artists.");
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     }
     run();
@@ -39,20 +40,20 @@ export default function ArtistsPage() {
         <title>Artists · ONL Music</title>
       </Helmet>
 
-      <h1 className="mb-6 text-2xl font-bold text-[var(--text)]">Artists</h1>
+      <SectionHeader title="Artists" />
 
       {loading ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <SkeletonCard key={i} />
+        <MediaRow>
+          {Array.from({ length: 10 }).map((_, i) => (
+            <SkeletonArtistCard key={i} />
           ))}
-        </div>
+        </MediaRow>
       ) : err ? (
         <ErrorState title="Error" message={err} />
       ) : artists.length === 0 ? (
         <EmptyState title="No artists" />
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        <MediaRow>
           {artists.map((a) => (
             <MediaCard
               key={a.id}
@@ -63,10 +64,11 @@ export default function ArtistsPage() {
                 bucket: "artist-images",
               })}
               title={a.name}
-              variant="round"
+              variant="artist"
+              showPlayOnHover={false}
             />
           ))}
-        </div>
+        </MediaRow>
       )}
     </div>
   );
