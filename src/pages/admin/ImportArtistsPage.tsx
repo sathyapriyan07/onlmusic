@@ -35,8 +35,10 @@ export default function ImportArtistsPage() {
       
       if (searchSource === "itunes") {
         res = await fetch(`https://itunes.apple.com/search?term=${term}&media=music&entity=musicArtist&limit=25`);
+        if (!res.ok) throw new Error(`iTunes API error: ${res.status}`);
         const data = await res.json();
-        const raw = data.resultCount > 0 ? data.results : [];
+        if (data.errorMessage) throw new Error(data.errorMessage);
+        const raw = data.results || [];
         const mapped: ItunesArtist[] = raw
           .filter((r: Record<string, unknown>) => r.artistId && r.artistName)
           .map((r: Record<string, unknown>) => ({
