@@ -1,21 +1,10 @@
 import type { ReactNode } from "react";
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Album, Home, Music2, Shield, Users } from "lucide-react";
 import clsx from "clsx";
 import { useAuth } from "../state/AuthProvider";
 import UnifiedSearch from "./UnifiedSearch";
 import ThemeToggle from "./ThemeToggle";
-
-function PageTitle() {
-  const loc = useLocation();
-  const path = loc.pathname;
-  if (path.startsWith("/songs")) return "Songs";
-  if (path.startsWith("/albums")) return "Albums";
-  if (path.startsWith("/artists")) return "Artists";
-  if (path.startsWith("/admin")) return "Admin";
-  if (path.startsWith("/login")) return "Sign in";
-  return "Home";
-}
 
 export default function AppShell({ children }: { children: ReactNode }) {
   const { user, role, signOut } = useAuth();
@@ -48,7 +37,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
               className={({ isActive }) =>
                 clsx(
                   "flex items-center gap-4 rounded-lg px-4 py-3 text-sm font-medium transition",
-                  isActive ? "bg-white/10 text-[var(--text)]" : "text-[var(--muted)] hover:text-[var(--text)]"
+                  isActive ? "bg-[var(--accent)] text-black" : "text-[var(--muted)] hover:text-[var(--text)]"
                 )
               }
             >
@@ -62,7 +51,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
               className={({ isActive }) =>
                 clsx(
                   "flex items-center gap-4 rounded-lg px-4 py-3 text-sm font-medium transition",
-                  isActive ? "bg-white/10 text-[var(--text)]" : "text-[var(--muted)] hover:text-[var(--text)]"
+                  isActive ? "bg-[var(--accent)] text-black" : "text-[var(--muted)] hover:text-[var(--text)]"
                 )
               }
             >
@@ -107,7 +96,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                   className={({ isActive }) =>
                     clsx(
                       "rounded-full px-4 py-2 text-sm font-medium transition",
-                      isActive ? "bg-white text-black" : "text-[var(--muted)] hover:text-[var(--text)]"
+                      isActive ? "bg-[var(--accent)] text-black" : "text-[var(--muted)] hover:text-[var(--text)]"
                     )
                   }
                 >
@@ -124,26 +113,39 @@ export default function AppShell({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        {/* Page Title - Mobile */}
-        <div className="flex items-center justify-between border-b border-app px-5 py-4 lg:hidden">
-          <div>
-            <div className="text-xl font-bold text-[var(--text)]">
-              <PageTitle />
-            </div>
-            <div className="text-xs text-[var(--muted)]">Discovery</div>
-          </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            {role === "admin" && (
-              <Link
-                to="/admin"
-                className="rounded-full bg-panel2 px-4 py-2 text-sm font-medium text-[var(--text)]"
-              >
-                Admin
-              </Link>
-            )}
-          </div>
-        </div>
+        {/* Mobile Horizontal Nav - like admin */}
+        <nav className="lg:hidden flex gap-1 overflow-x-auto px-4 py-3 border-b border-app scrollbar-hide">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === "/"}
+              className={({ isActive }) =>
+                clsx(
+                  "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
+                  isActive ? "bg-[var(--accent)] text-black" : "bg-panel text-[var(--muted)]"
+                )
+              }
+            >
+              <item.icon className="w-4 h-4" />
+              {item.label}
+            </NavLink>
+          ))}
+          {role === "admin" && (
+            <NavLink
+              to="/admin"
+              className={({ isActive }) =>
+                clsx(
+                  "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all",
+                  isActive ? "bg-[var(--accent)] text-black" : "bg-panel text-[var(--muted)]"
+                )
+              }
+            >
+              <Shield className="w-4 h-4" />
+              Admin
+            </NavLink>
+          )}
+        </nav>
 
         {/* Search - Mobile */}
         <div className="px-4 py-3 lg:hidden">
@@ -154,25 +156,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
         <div className="overflow-x-hidden px-4 py-4 sm:px-6 lg:px-8">{children}</div>
       </main>
 
-      {/* Mobile Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 flex items-center justify-around border-t border-app bg-panel py-2 lg:hidden z-50">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.to === "/"}
-            className={({ isActive }) =>
-              clsx(
-                "flex flex-col items-center gap-1 px-4 py-2 text-xs font-medium transition",
-                isActive ? "text-[var(--accent)]" : "text-[var(--muted)]"
-              )
-            }
-          >
-            <item.icon className="h-5 w-5" />
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
+      {/* Mobile Bottom Nav - removed, using horizontal nav instead */}
     </div>
   );
 }
