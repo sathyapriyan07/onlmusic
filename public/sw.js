@@ -1,4 +1,4 @@
-const CACHE_NAME = 'onl-music-v1';
+const CACHE_NAME = 'onl-music-v2';
 const urlsToCache = ['/'];
 
 self.addEventListener('install', (event) => {
