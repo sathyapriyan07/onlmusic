@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "../../lib/supabaseClient";
 import type { Album, Artist, Song } from "../../lib/types";
 import { listAlbums, listArtists, listSongs } from "../../lib/db";
 import { resolveImageSrc } from "../../lib/images";
 import { AdminCard, FormField, FormActions, AdminButton, AdminEmpty } from "../../components/admin/AdminComponents";
-import { Edit2, Trash2, Upload, Plus, X, Download } from "lucide-react";
+import { Edit2, Trash2, Upload, Plus, X, Download, Search, Check, Music } from "lucide-react";
 
 const BUCKET = "song-covers";
 
@@ -23,8 +22,9 @@ interface ItunesResult {
   previewUrl: string | null;
 }
 
+type ImportSource = "itunes" | "musicbrainz" | "deezer";
+
 export default function AdminSongsPage() {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [songs, setSongs] = useState<Song[]>([]);
@@ -45,13 +45,14 @@ export default function AdminSongsPage() {
   const [credits, setCredits] = useState<Credit[]>([]);
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [importQuery, setImportQuery] = useState("");
   const [importing, setImporting] = useState(false);
   const [importResults, setImportResults] = useState<ItunesResult[]>([]);
   const [selectedImportIds, setSelectedImportIds] = useState<Set<number>>(new Set());
   const [bulkImporting, setBulkImporting] = useState(false);
-  const [importSource, setImportSource] = useState<"itunes" | "musicbrainz" | "deezer">("itunes");
+  const [importSource, setImportSource] = useState<ImportSource>("itunes");
 
   async function refresh() {
     setLoading(true);
@@ -343,6 +344,18 @@ export default function AdminSongsPage() {
     });
   }
 
+  function handleImportSearch() {
+    if (importSource === "itunes") searchItunes(importQuery);
+    else if (importSource === "musicbrainz") searchMusicBrainz(importQuery);
+    else searchDeezer(importQuery);
+  }
+
+  const sourceLabels: Record<ImportSource, string> = {
+    itunes: "iTunes",
+    musicbrainz: "MusicBrainz",
+    deezer: "Deezer",
+  };
+
   return (
     <div>
       <Helmet>
@@ -355,7 +368,7 @@ export default function AdminSongsPage() {
           <p className="text-sm text-[var(--muted)] mt-1">Manage your song catalog</p>
         </div>
         <div className="flex gap-2">
-          <AdminButton variant="secondary" onClick={() => navigate("/admin/songs/import")}>
+          <AdminButton variant="secondary" onClick={() => setImportModalOpen(true)}>
             <Download className="w-4 h-4 mr-2" /> Import
           </AdminButton>
           <AdminButton onClick={() => { resetForm(); setShowForm(true); }}>
@@ -371,7 +384,6 @@ export default function AdminSongsPage() {
       )}
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Form Card */}
         <AdminCard title={editing ? "Edit Song" : "Add New Song"}>
           <div className="space-y-4">
             <FormField label="Title">
@@ -542,7 +554,6 @@ export default function AdminSongsPage() {
           </div>
         </AdminCard>
 
-        {/* List Card */}
         <AdminCard 
           title={`Songs (${filteredSongs.length})`}
           action={
@@ -601,6 +612,132 @@ export default function AdminSongsPage() {
         </AdminCard>
       </div>
 
+      {importModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-2xl max-h-[80vh] bg-[var(--surface)] rounded-2xl shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-app">
+              <h2 className="text-lg font-semibold text-[var(--text)]">Import from {sourceLabels[importSource]}</h2>
+              <button
+                onClick={() => setImportModalOpen(false)}
+                className="p-2 rounded-lg hover:bg-[var(--hover)] text-[var(--muted)]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 border-b border-app">
+              <div className="flex gap-2 mb-3">
+                {(["itunes", "musicbrainz", "deezer"] as ImportSource[]).map((source) => (
+                  <button
+                    key={source}
+                    onClick={() => { setImportSource(source); setImportResults([]); setSelectedImportIds(new Set()); }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                      importSource === source
+                        ? "bg-[var(--accent)] text-white"
+                        : "bg-[var(--elevated)] text-[var(--text-secondary)] hover:bg-[var(--hover)]"
+                    }`}
+                  >
+                    {sourceLabels[source]}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted)]" />
+                  <input
+                    value={importQuery}
+                    onChange={(e) => setImportQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleImportSearch()}
+                    placeholder={`Search on ${sourceLabels[importSource]}...`}
+                    className="w-full pl-10 pr-4 py-3 bg-[var(--elevated)] rounded-xl text-[var(--text)] text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                  />
+                </div>
+                <AdminButton onClick={handleImportSearch} disabled={importing || !importQuery.trim()}>
+                  {importing ? "Searching..." : "Search"}
+                </AdminButton>
+              </div>
+            </div>
+
+            <div className="p-4 max-h-[400px] overflow-y-auto">
+              {importing ? (
+                <div className="py-8 text-center text-[var(--muted)]">Searching...</div>
+              ) : importResults.length === 0 ? (
+                <div className="py-8 text-center text-[var(--muted)]">
+                  <Music className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>Search for songs to import</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {importResults.map((r) => {
+                    const isSelected = selectedImportIds.has(r.trackId);
+                    const exists = songs.some((s) => s.title.toLowerCase() === r.trackName.toLowerCase());
+                    return (
+                      <div
+                        key={r.trackId}
+                        className={`flex items-center gap-3 p-3 rounded-xl transition ${
+                          exists
+                            ? "opacity-50"
+                            : isSelected
+                            ? "bg-[var(--accent)]/10"
+                            : "bg-[var(--elevated)] hover:bg-[var(--hover)]"
+                        }`}
+                      >
+                        <button
+                          onClick={() => !exists && toggleImportSelect(r.trackId)}
+                          disabled={exists}
+                          className={`w-6 h-6 rounded-md flex items-center justify-center transition ${
+                            isSelected
+                              ? "bg-[var(--accent)] text-white"
+                              : exists
+                              ? "bg-[var(--hover)] text-[var(--muted)]"
+                              : "border border-[var(--border)] text-transparent hover:border-[var(--accent)]"
+                          }`}
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <div className="w-12 h-12 rounded-lg bg-[var(--hover)] overflow-hidden shrink-0">
+                          {r.artworkUrl100 && (
+                            <img src={r.artworkUrl100} alt="" className="w-full h-full object-cover" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-[var(--text)] truncate">{r.trackName}</p>
+                          <p className="text-xs text-[var(--muted)] truncate">
+                            {r.artistName}
+                            {r.collectionName && ` · ${r.collectionName}`}
+                          </p>
+                        </div>
+                        {exists && (
+                          <span className="text-xs text-[var(--accent)]">Already exists</span>
+                        )}
+                        <button
+                          onClick={() => importFromItunes(r)}
+                          className="px-3 py-1.5 rounded-lg bg-[var(--elevated)] hover:bg-[var(--hover)] text-sm text-[var(--text)]"
+                        >
+                          {exists ? "Edit" : "Import"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {selectedImportIds.size > 0 && (
+              <div className="p-4 border-t border-app">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-[var(--muted)]">
+                    {selectedImportIds.size} selected
+                  </span>
+                  <AdminButton onClick={bulkImportSelected} disabled={bulkImporting}>
+                    {bulkImporting ? "Importing..." : `Import ${selectedImportIds.size} Songs`}
+                  </AdminButton>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

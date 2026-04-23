@@ -165,42 +165,28 @@ export default function SongDetailPage() {
         {youtubeLinks.length > 0 && (
           <section>
             <SectionHeader title="Videos" />
-            <MediaRow>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {youtubeLinks.map((link) => {
                 const videoId = extractVideoId(link.url);
+                if (!videoId) return null;
                 return (
-                  <a
-                    key={link.id}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group block w-72 shrink-0"
-                  >
-                    <div className="relative aspect-video rounded-lg overflow-hidden bg-[var(--elevated)] media-card-hover">
-                      {videoId ? (
-                        <img
-                          src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
-                          alt={link.title || "YouTube video"}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Play className="w-12 h-12 text-[var(--text-secondary)]" />
-                        </div>
-                      )}
-                      <div className="play-overlay">
-                        <div className="play-button">
-                          <Play className="h-5 w-5 text-white fill-white" />
-                        </div>
-                      </div>
+                  <div key={link.id} className="rounded-xl overflow-hidden bg-[var(--elevated)]">
+                    <div className="aspect-video w-full">
+                      <iframe
+                        src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`}
+                        title={link.title || "YouTube video"}
+                        className="w-full h-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
                     </div>
-                    <p className="mt-3 text-sm font-medium text-[var(--text)] group-hover:text-[var(--accent)] line-clamp-2">
-                      {link.title || "YouTube Video"}
-                    </p>
-                  </a>
+                    {link.title && (
+                      <p className="px-4 py-3 text-sm font-medium text-[var(--text)]">{link.title}</p>
+                    )}
+                  </div>
                 );
               })}
-            </MediaRow>
+            </div>
           </section>
         )}
 

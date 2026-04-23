@@ -1,23 +1,28 @@
 import { useEffect, useState, useRef } from "react";
 import { Helmet } from "react-helmet-async";
-import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "../../lib/supabaseClient";
 import type { Artist } from "../../lib/types";
 import { listArtists } from "../../lib/db";
 import { resolveImageSrc } from "../../lib/images";
 import { AdminCard, FormField, FormActions, AdminButton, AdminEmpty } from "../../components/admin/AdminComponents";
-import { Plus, Edit2, Trash2, Upload, X, Mic2 } from "lucide-react";
+import { Plus, Edit2, Trash2, Upload, X, Mic2, Download, Search, Check } from "lucide-react";
 
 const BUCKET = "artist-images";
 
+interface ItunesArtistResult {
+  artistId: number;
+  artistName: string;
+  artistLinkUrl: string | null;
+  artistViewUrl: string | null;
+  artworkUrl100: string | null;
+}
+
 export default function AdminArtistsPage() {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [artists, setArtists] = useState<Artist[]>([]);
   
-  const [showForm, setShowForm] = useState(searchParams.get("new") === "1");
+  const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Artist | null>(null);
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
@@ -26,6 +31,13 @@ export default function AdminArtistsPage() {
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const imageFileRef = useRef<HTMLInputElement>(null);
+
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importQuery, setImportQuery] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importResults, setImportResults] = useState<ItunesArtistResult[]>([]);
+  const [selectedImportIds, setSelectedImportIds] = useState<Set<number>>(new Set());
+  const [bulkImporting, setBulkImporting] = useState(false);
 
   async function refresh() {
     setLoading(true);
@@ -113,6 +125,83 @@ export default function AdminArtistsPage() {
     }
   }
 
+  async function searchItunesArtists(q: string) {
+    if (!q.trim()) return;
+    setImporting(true);
+    setErr(null);
+    try {
+      const term = encodeURIComponent(q.trim());
+      const resp = await fetch(`https://itunes.apple.com/search?term=${term}&media=music&entity=musicArtist&limit=25`);
+      const data = await resp.json();
+      const results: ItunesArtistResult[] = (data.results ?? []).map((r: Record<string, unknown>) => ({
+        artistId: r.artistId as number,
+        artistName: r.artistName as string,
+        artistLinkUrl: r.artistLinkUrl as string | null,
+        artistViewUrl: r.artistViewUrl as string | null,
+        artworkUrl100: r.artworkUrl100 as string | null,
+      }));
+      setImportResults(results);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to search iTunes.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  async function importFromItunes(r: ItunesArtistResult) {
+    const existingArtist = artists.find(
+      (a) => a.name.toLowerCase() === r.artistName.toLowerCase()
+    );
+    if (existingArtist) {
+      if (!confirm(`"${r.artistName}" already exists. Select anyway?`)) return;
+      startEdit(existingArtist);
+    } else {
+      resetForm();
+      setName(r.artistName);
+      if (r.artworkUrl100) {
+        setImageUrl(r.artworkUrl100.replace("100x100", "600x600"));
+      }
+    }
+    setImportModalOpen(false);
+  }
+
+  async function bulkImportSelected() {
+    if (selectedImportIds.size === 0) return;
+    setBulkImporting(true);
+    setErr(null);
+    try {
+      const toImport = importResults.filter((r) => selectedImportIds.has(r.artistId));
+      const inserts: Array<{ name: string; image_url: string | null; published: boolean }> = [];
+      for (const r of toImport) {
+        if (artists.some((a) => a.name.toLowerCase() === r.artistName.toLowerCase())) continue;
+        inserts.push({
+          name: r.artistName,
+          image_url: r.artworkUrl100 ? r.artworkUrl100.replace("100x100", "600x600") : null,
+          published: true,
+        });
+      }
+      if (inserts.length > 0) {
+        const { error } = await supabase.from("artists").insert(inserts);
+        if (error) throw error;
+      }
+      setImportModalOpen(false);
+      await refresh();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Bulk import failed.");
+    } finally {
+      setBulkImporting(false);
+    }
+  }
+
+  function toggleImportSelect(id: number) {
+    setSelectedImportIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
   const filteredArtists = artists.filter(a => 
     a.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -129,8 +218,8 @@ export default function AdminArtistsPage() {
           <p className="text-sm text-[var(--muted)] mt-1">Manage your artist catalog</p>
         </div>
         <div className="flex gap-2">
-          <AdminButton variant="secondary" onClick={() => navigate("/admin/artists/import")}>
-            Import
+          <AdminButton variant="secondary" onClick={() => setImportModalOpen(true)}>
+            <Download className="w-4 h-4 mr-2" /> Import
           </AdminButton>
           <AdminButton onClick={() => { resetForm(); setShowForm(true); }}>
             <Plus className="w-4 h-4 mr-2" /> Add Artist
@@ -281,6 +370,115 @@ export default function AdminArtistsPage() {
           )}
         </AdminCard>
       </div>
+
+      {/* Import Modal */}
+      {importModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-2xl max-h-[80vh] bg-[var(--surface)] rounded-2xl shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-app">
+              <h2 className="text-lg font-semibold text-[var(--text)]">Import from iTunes</h2>
+              <button
+                onClick={() => setImportModalOpen(false)}
+                className="p-2 rounded-lg hover:bg-[var(--hover)] text-[var(--muted)]"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 border-b border-app">
+              <div className="flex gap-2">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--muted)]" />
+                  <input
+                    value={importQuery}
+                    onChange={(e) => setImportQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && searchItunesArtists(importQuery)}
+                    placeholder="Search artists on iTunes..."
+                    className="w-full pl-10 pr-4 py-3 bg-[var(--elevated)] rounded-xl text-[var(--text)] text-sm outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                  />
+                </div>
+                <AdminButton onClick={() => searchItunesArtists(importQuery)} disabled={importing || !importQuery.trim()}>
+                  {importing ? "Searching..." : "Search"}
+                </AdminButton>
+              </div>
+            </div>
+
+            <div className="p-4 max-h-[400px] overflow-y-auto">
+              {importing ? (
+                <div className="py-8 text-center text-[var(--muted)]">Searching...</div>
+              ) : importResults.length === 0 ? (
+                <div className="py-8 text-center text-[var(--muted)]">
+                  <Mic2 className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                  <p>Search for artists to import</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {importResults.map((r) => {
+                    const isSelected = selectedImportIds.has(r.artistId);
+                    const exists = artists.some((a) => a.name.toLowerCase() === r.artistName.toLowerCase());
+                    return (
+                      <div
+                        key={r.artistId}
+                        className={`flex items-center gap-3 p-3 rounded-xl transition ${
+                          exists
+                            ? "opacity-50"
+                            : isSelected
+                            ? "bg-[var(--accent)]/10"
+                            : "bg-[var(--elevated)] hover:bg-[var(--hover)]"
+                        }`}
+                      >
+                        <button
+                          onClick={() => !exists && toggleImportSelect(r.artistId)}
+                          disabled={exists}
+                          className={`w-6 h-6 rounded-md flex items-center justify-center transition ${
+                            isSelected
+                              ? "bg-[var(--accent)] text-white"
+                              : exists
+                              ? "bg-[var(--hover)] text-[var(--muted)]"
+                              : "border border-[var(--border)] text-transparent hover:border-[var(--accent)]"
+                          }`}
+                        >
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <div className="w-12 h-12 rounded-full bg-[var(--hover)] overflow-hidden shrink-0">
+                          {r.artworkUrl100 && (
+                            <img src={r.artworkUrl100} alt="" className="w-full h-full object-cover" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-[var(--text)] truncate">{r.artistName}</p>
+                        </div>
+                        {exists && (
+                          <span className="text-xs text-[var(--accent)]">Already exists</span>
+                        )}
+                        <button
+                          onClick={() => importFromItunes(r)}
+                          className="px-3 py-1.5 rounded-lg bg-[var(--elevated)] hover:bg-[var(--hover)] text-sm text-[var(--text)]"
+                        >
+                          {exists ? "Edit" : "Import"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {selectedImportIds.size > 0 && (
+              <div className="p-4 border-t border-app">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-[var(--muted)]">
+                    {selectedImportIds.size} selected
+                  </span>
+                  <AdminButton onClick={bulkImportSelected} disabled={bulkImporting}>
+                    {bulkImporting ? "Importing..." : `Import ${selectedImportIds.size} Artists`}
+                  </AdminButton>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
