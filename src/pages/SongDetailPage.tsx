@@ -1,13 +1,18 @@
 import { useEffect, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useParams } from "react-router-dom";
-import PlayerEmbed from "../components/PlayerEmbed";
+import { Play } from "lucide-react";
 import AudioPreview from "../components/AudioPreview";
 import LinkButtons from "../components/LinkButtons";
 import { ErrorState } from "../components/States";
 import { getAlbum, getSong, getSongArtists, listLinks, listSongs } from "../lib/db";
 import type { Album, Link as LinkRow, Song } from "../lib/types";
 import { resolveImageSrc } from "../lib/images";
+
+function extractVideoId(url: string): string | null {
+  const match = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s]+)/);
+  return match ? match[1] : null;
+}
 
 export default function SongDetailPage() {
   const { id } = useParams();
@@ -92,7 +97,8 @@ export default function SongDetailPage() {
     };
   }, [songId]);
 
-  const youtubeLink = links.find((l) => l.platform.toLowerCase().includes("youtube")) ?? null;
+  const youtubeLinks = links.filter((l) => l.platform.toLowerCase().includes("youtube"));
+  const otherLinks = links.filter((l) => !l.platform.toLowerCase().includes("youtube"));
 
   if (loading) return <div className="p-4">Loading...</div>;
   if (err) return <ErrorState title="Error" message={err} />;
@@ -142,14 +148,62 @@ export default function SongDetailPage() {
               {song.duration && <span>{song.duration}</span>}
               {album && <span>· {album.title}</span>}
             </div>
+
+            {/* YouTube Links as Cards */}
+            {youtubeLinks.length > 0 && (
+              <div className="mt-4">
+                <h2 className="mb-3 text-lg font-bold text-[var(--text)]">YouTube</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {youtubeLinks.map((link) => {
+                    const videoId = extractVideoId(link.url);
+                    return (
+                      <a
+                        key={link.id}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block group"
+                      >
+                        <div className="relative aspect-video rounded-xl overflow-hidden bg-black/40">
+                          {videoId ? (
+                            <img
+                              src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
+                              alt={link.title || "YouTube video"}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Play className="w-12 h-12 text-[var(--muted)]" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                            <Play className="w-10 h-10 text-white opacity-80" fill="white" />
+                          </div>
+                        </div>
+                        <p className="mt-2 text-sm font-medium text-[var(--text)] group-hover:text-[var(--accent)] line-clamp-2">
+                          {link.title || "YouTube Video"}
+                        </p>
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Other Links */}
+            {otherLinks.length > 0 && (
+              <div className="mt-4">
+                <h2 className="mb-3 text-lg font-bold text-[var(--text)]">Links</h2>
+                <LinkButtons links={otherLinks} />
+              </div>
+            )}
           </div>
+
+          {song.preview_url && <div className="max-w-md mx-auto sm:mx-0"><AudioPreview src={song.preview_url} /></div>}
         </div>
-        {youtubeLink && (
-          <>
-            <PlayerEmbed url={youtubeLink.url} />
-            {youtubeLink.title && <div className="mt-2 text-sm text-dim">{youtubeLink.title}</div>}
-          </>
+          </div>
         )}
+
         {song.preview_url && <div className="max-w-md mx-auto sm:mx-0"><AudioPreview src={song.preview_url} /></div>}
       </div>
 
