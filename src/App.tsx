@@ -18,6 +18,9 @@ import AdminSongsPage from "./pages/admin/AdminSongsPage";
 import AdminHomepageSectionsPage from "./pages/admin/AdminHomepageSectionsPage";
 import AdminLinksPage from "./pages/admin/AdminLinksPage";
 import AdminMusicRightsPage from "./pages/admin/AdminMusicRightsPage";
+import ImportArtistsPage from "./pages/admin/ImportArtistsPage";
+import ImportAlbumsPage from "./pages/admin/ImportAlbumsPage";
+import ImportSongsPage from "./pages/admin/ImportSongsPage";
 import RequireAdmin from "./components/RequireAdmin";
 
 export default function App() {
@@ -58,6 +61,9 @@ export default function App() {
           <Route path="homepage" element={<AdminHomepageSectionsPage />} />
           <Route path="links" element={<AdminLinksPage />} />
           <Route path="rights" element={<AdminMusicRightsPage />} />
+          <Route path="artists/import" element={<ImportArtistsPage />} />
+          <Route path="albums/import" element={<ImportAlbumsPage />} />
+          <Route path="songs/import" element={<ImportSongsPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

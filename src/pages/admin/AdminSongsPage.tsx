@@ -1,28 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router";
 import { Helmet } from "react-helmet-async";
 import { supabase } from "../../lib/supabaseClient";
 import type { Album, Artist, Song } from "../../lib/types";
 import { listAlbums, listArtists, listSongs } from "../../lib/db";
 import { resolveImageSrc } from "../../lib/images";
-import { AdminCard, AdminModal, FormField, FormActions, AdminButton, AdminEmpty } from "../../components/admin/AdminComponents";
-import { Search, Edit2, Trash2, Upload, Plus, X } from "lucide-react";
+import { AdminCard, FormField, FormActions, AdminButton, AdminEmpty } from "../../components/admin/AdminComponents";
+import { Edit2, Trash2, Upload, Plus, X, Download } from "lucide-react";
 
 const BUCKET = "song-covers";
 
 type Credit = { artist_id: string; role: string };
 
-interface ItunesResult {
-  trackId: number;
-  trackName: string;
-  artistName: string;
-  collectionName: string | null;
-  releaseDate: string | null;
-  trackTimeMillis: number | null;
-  artworkUrl100: string | null;
-  previewUrl: string | null;
-}
-
 export default function AdminSongsPage() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [songs, setSongs] = useState<Song[]>([]);
@@ -43,14 +34,6 @@ export default function AdminSongsPage() {
   const [credits, setCredits] = useState<Credit[]>([]);
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
-  const [importModalOpen, setImportModalOpen] = useState(false);
-  const [importQuery, setImportQuery] = useState("");
-  const [importing, setImporting] = useState(false);
-  const [importResults, setImportResults] = useState<ItunesResult[]>([]);
-  const [selectedImportIds, setSelectedImportIds] = useState<Set<number>>(new Set());
-  const [bulkImporting, setBulkImporting] = useState(false);
-  const [importSource, setImportSource] = useState<"itunes" | "musicbrainz" | "deezer">("itunes");
 
   async function refresh() {
     setLoading(true);
@@ -186,165 +169,6 @@ export default function AdminSongsPage() {
     }
   }
 
-  async function doSearch() {
-    if (!importQuery.trim()) return;
-    if (importSource === "itunes") await searchItunes(importQuery);
-    else if (importSource === "musicbrainz") await searchMusicBrainz(importQuery);
-    else await searchDeezer(importQuery);
-  }
-
-  async function searchItunes(q: string) {
-    if (!q.trim()) return;
-    setImporting(true);
-    setErr(null);
-    try {
-      const term = encodeURIComponent(q.trim());
-      const resp = await fetch(`https://itunes.apple.com/search?term=${term}&media=music&entity=song&limit=25`);
-      const data = await resp.json();
-      const results: ItunesResult[] = (data.results ?? []).map((r: Record<string, unknown>) => ({
-        trackId: r.trackId as number,
-        trackName: r.trackName as string,
-        artistName: r.artistName as string,
-        collectionName: r.collectionName as string | null,
-        releaseDate: r.releaseDate as string | null,
-        trackTimeMillis: r.trackTimeMillis as number | null,
-        artworkUrl100: r.artworkUrl100 as string | null,
-        previewUrl: r.previewUrl as string | null,
-      }));
-      setImportResults(results);
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Failed to search iTunes.");
-    } finally {
-      setImporting(false);
-    }
-  }
-
-  async function searchMusicBrainz(q: string) {
-    if (!q.trim()) return;
-    setImporting(true);
-    setErr(null);
-    try {
-      const term = encodeURIComponent(q.trim());
-      const resp = await fetch(`https://musicbrainz.org/ws/2/recording?query=${term}&type=recording&limit=25&fmt=json`, {
-        headers: { "User-Agent": "ONLMusic/1.0 (contact@onlmusic.dev)" },
-      });
-      const data = await resp.json();
-      const results: ItunesResult[] = (data.recordings ?? []).map((r: Record<string, unknown>, i: number) => ({
-        trackId: i,
-        trackName: r.title as string,
-        artistName: ((r.artist as Record<string, unknown>)?.name as string) || "Unknown",
-        collectionName: null,
-        releaseDate: null,
-        trackTimeMillis: null,
-        artworkUrl100: null,
-        previewUrl: null,
-      }));
-      setImportResults(results);
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Failed to search MusicBrainz.");
-    } finally {
-      setImporting(false);
-    }
-  }
-
-  async function searchDeezer(q: string) {
-    if (!q.trim()) return;
-    setImporting(true);
-    setErr(null);
-    try {
-      const term = encodeURIComponent(q.trim());
-      const resp = await fetch(`https://api.deezer.com/search/track?q=${term}&limit=25`);
-      const data = await resp.json();
-      const results: ItunesResult[] = (data.data ?? []).map((r: Record<string, unknown>) => ({
-        trackId: r.id as number,
-        trackName: r.title as string,
-        artistName: (r.artist as Record<string, unknown>).name as string,
-        collectionName: (r.album as Record<string, unknown>)?.title as string || null,
-        releaseDate: (r.album as Record<string, unknown>)?.release_date as string || null,
-        trackTimeMillis: (r.duration as number) * 1000,
-        artworkUrl100: (r.album as Record<string, unknown>)?.cover_medium_url as string || (r.album as Record<string, unknown>)?.cover_small_url as string || null,
-        previewUrl: r.preview as string || null,
-      }));
-      setImportResults(results);
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Failed to search Deezer.");
-    } finally {
-      setImporting(false);
-    }
-  }
-
-  async function importFromItunes(r: ItunesResult) {
-    const existingSong = songs.find(
-      (s) => s.title.toLowerCase() === r.trackName.toLowerCase()
-    );
-    if (existingSong) {
-      if (!confirm(`"${r.trackName}" already exists. Select anyway?`)) return;
-      startEdit(existingSong);
-    } else {
-      resetForm();
-      setTitle(r.trackName);
-      if (r.releaseDate) {
-        setYear(r.releaseDate.slice(0, 4));
-      }
-      if (r.trackTimeMillis) {
-        const mins = Math.floor(r.trackTimeMillis / 60000);
-        const secs = Math.floor((r.trackTimeMillis % 60000) / 1000);
-        setDuration(`${mins}:${secs.toString().padStart(2, "0")}`);
-      }
-      if (r.artworkUrl100) {
-        setCoverUrl(r.artworkUrl100.replace("100x100", "600x600"));
-      }
-      if (r.previewUrl) {
-        setPreviewUrl(r.previewUrl);
-      }
-      setShowForm(true);
-    }
-    setImportModalOpen(false);
-  }
-
-  async function bulkImportSelected() {
-    if (selectedImportIds.size === 0) return;
-    setBulkImporting(true);
-    setErr(null);
-    try {
-      const toImport = importResults.filter((r) => selectedImportIds.has(r.trackId));
-      const inserts: Array<{ title: string; year: number | null; duration: string | null; cover_url: string | null; preview_url: string | null; published: boolean }> = [];
-      for (const r of toImport) {
-        if (songs.some((s) => s.title.toLowerCase() === r.trackName.toLowerCase())) continue;
-        inserts.push({
-          title: r.trackName,
-          year: r.releaseDate ? Number(r.releaseDate.slice(0, 4)) : null,
-          duration: r.trackTimeMillis
-            ? `${Math.floor(r.trackTimeMillis / 60000)}:${Math.floor((r.trackTimeMillis % 60000) / 1000).toString().padStart(2, "0")}`
-            : null,
-          cover_url: r.artworkUrl100 ? r.artworkUrl100.replace("100x100", "600x600") : null,
-          preview_url: r.previewUrl,
-          published: true,
-        });
-      }
-      if (inserts.length > 0) {
-        const { error } = await supabase.from("songs").insert(inserts);
-        if (error) throw error;
-        await refresh();
-      }
-      setImportModalOpen(false);
-      setSelectedImportIds(new Set());
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : "Failed to bulk import.");
-    } finally {
-      setBulkImporting(false);
-    }
-  }
-
-  function toggleSelection(id: number) {
-    setSelectedImportIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
   const sortedAlbums = useMemo(() => [...albums].sort((a, b) => a.title.localeCompare(b.title)), [albums]);
   const sortedArtists = useMemo(() => [...artists].sort((a, b) => a.name.localeCompare(b.name)), [artists]);
   const filteredSongs = songs.filter(s => 
@@ -363,8 +187,8 @@ export default function AdminSongsPage() {
           <p className="text-sm text-[var(--muted)] mt-1">Manage your song catalog</p>
         </div>
         <div className="flex gap-2">
-          <AdminButton variant="secondary" onClick={() => { setImportSource("itunes"); setImportModalOpen(true); }}>
-            <Search className="w-4 h-4 mr-2" /> Import
+          <AdminButton variant="secondary" onClick={() => navigate("/admin/songs/import")}>
+            <Download className="w-4 h-4 mr-2" /> Import
           </AdminButton>
           <AdminButton onClick={() => { resetForm(); setShowForm(true); }}>
             <Plus className="w-4 h-4 mr-2" /> Add Song
@@ -609,100 +433,6 @@ export default function AdminSongsPage() {
         </AdminCard>
       </div>
 
-      {/* Import Modal */}
-      <AdminModal open={importModalOpen} onClose={() => setImportModalOpen(false)} title="Import Songs">
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <button
-              onClick={() => { setImportSource("itunes"); setImportResults([]); setImportQuery(""); }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                importSource === "itunes" ? "bg-[var(--accent)] text-black" : "bg-white/10 text-[var(--text)]"
-              }`}
-            >
-              iTunes
-            </button>
-            <button
-              onClick={() => { setImportSource("musicbrainz"); setImportResults([]); setImportQuery(""); }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                importSource === "musicbrainz" ? "bg-[var(--accent)] text-black" : "bg-white/10 text-[var(--text)]"
-              }`}
-            >
-              MusicBrainz
-            </button>
-            <button
-              onClick={() => { setImportSource("deezer"); setImportResults([]); setImportQuery(""); }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                importSource === "deezer" ? "bg-[var(--accent)] text-black" : "bg-white/10 text-[var(--text)]"
-              }`}
-            >
-              Deezer
-            </button>
-          </div>
-          
-          <div className="flex gap-2">
-            <input
-              value={importQuery}
-              onChange={(e) => setImportQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && doSearch()}
-              placeholder="Search songs..."
-              className="flex-1 px-4 py-3 bg-white/5 border border-app rounded-xl text-[var(--text)] text-sm outline-none"
-            />
-            <AdminButton onClick={doSearch} disabled={importing}>
-              {importing ? "..." : <Search className="w-4 h-4" />}
-            </AdminButton>
-          </div>
-
-          {importResults.length > 0 && (
-            <div className="flex items-center justify-between py-2 border-b border-app">
-              <div className="text-sm text-[var(--muted)]">
-                <button onClick={() => setSelectedImportIds(new Set(importResults.map(r => r.trackId)))} className="hover:text-[var(--text)] mr-3">
-                  Select All
-                </button>
-                <span className="text-[var(--accent)]">{selectedImportIds.size} selected</span>
-              </div>
-              <AdminButton onClick={bulkImportSelected} disabled={selectedImportIds.size === 0 || bulkImporting}>
-                {bulkImporting ? "Importing..." : "Import"}
-              </AdminButton>
-            </div>
-          )}
-
-          <div className="max-h-80 overflow-y-auto space-y-2">
-            {importResults.map((r) => (
-              <div
-                key={r.trackId}
-                onClick={() => toggleSelection(r.trackId)}
-                className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${
-                  selectedImportIds.has(r.trackId) ? "bg-[var(--accent)]/20" : "bg-white/5 hover:bg-white/10"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedImportIds.has(r.trackId)}
-                  onChange={() => {}}
-                  className="w-4 h-4 accent-[var(--accent)]"
-                />
-                <div className="w-10 h-10 rounded-lg bg-white/10 overflow-hidden shrink-0">
-                  {r.artworkUrl100 && <img src={r.artworkUrl100} alt="" className="w-full h-full object-cover" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[var(--text)] truncate">{r.trackName}</p>
-                  <p className="text-xs text-[var(--muted)] truncate">{r.artistName}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); importFromItunes(r); }}
-                  className="shrink-0 text-xs text-[var(--accent)] hover:underline"
-                >
-                  Single
-                </button>
-              </div>
-            ))}
-            {importResults.length === 0 && !importing && (
-              <div className="text-center text-sm text-[var(--muted)]">Search for songs to import.</div>
-            )}
-          </div>
-        </div>
-      </AdminModal>
     </div>
   );
 }
