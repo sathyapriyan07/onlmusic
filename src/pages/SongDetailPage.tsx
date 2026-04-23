@@ -198,11 +198,7 @@ export default function SongDetailPage() {
               </div>
             )}
           </div>
-
-          {song.preview_url && <div className="max-w-md mx-auto sm:mx-0"><AudioPreview src={song.preview_url} /></div>}
         </div>
-          </div>
-        )}
 
         {song.preview_url && <div className="max-w-md mx-auto sm:mx-0"><AudioPreview src={song.preview_url} /></div>}
       </div>
