@@ -78,7 +78,7 @@ export default function HomePage() {
       {resolved.map((section) => (
         <section key={section.id}>
           <h2 className="mb-4 text-xl font-bold text-[var(--text)]">{section.title}</h2>
-          <div className="flex gap-4 overflow-x-auto pb-2">
+          <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
             {section.itemsResolved.map((item) => {
               const isSong = section.type === "songs";
               const isAlbum = section.type === "albums";
