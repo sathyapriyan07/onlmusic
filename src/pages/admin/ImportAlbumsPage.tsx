@@ -37,10 +37,8 @@ export default function ImportAlbumsPage() {
       
       if (searchSource === "itunes") {
         res = await fetch(`https://itunes.apple.com/search?term=${term}&media=music&entity=album&limit=25`);
-        if (!res.ok) throw new Error(`iTunes API error: ${res.status}`);
         const data = await res.json();
-        if (data.errorMessage) throw new Error(data.errorMessage);
-        const raw = data.results || [];
+        const raw = data.resultCount > 0 ? data.results : [];
         const mapped: ItunesAlbum[] = raw
           .filter((r: Record<string, unknown>) => r.collectionId && r.collectionName)
           .map((r: Record<string, unknown>) => ({

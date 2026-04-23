@@ -38,10 +38,8 @@ export default function ImportSongsPage() {
       
       if (searchSource === "itunes") {
         res = await fetch(`https://itunes.apple.com/search?term=${term}&media=music&entity=song&limit=25`);
-        if (!res.ok) throw new Error(`iTunes API error: ${res.status}`);
         const data = await res.json();
-        if (data.errorMessage) throw new Error(data.errorMessage);
-        const raw = data.results || [];
+        const raw = data.resultCount > 0 ? data.results : [];
         const mapped: ItunesTrack[] = raw
           .filter((r: Record<string, unknown>) => r.trackId && r.trackName)
           .map((r: Record<string, unknown>) => ({
