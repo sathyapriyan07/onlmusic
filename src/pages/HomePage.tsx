@@ -83,7 +83,7 @@ export default function HomePage() {
               const isSong = section.type === "songs";
               const isAlbum = section.type === "albums";
               return (
-                <div key={item.id} className="w-40 shrink-0 sm:w-44">
+                <div key={item.id} className="w-32 shrink-0 sm:w-44">
                   <MediaCard
                     to={isSong ? `/songs/${item.id}` : isAlbum ? `/albums/${item.id}` : `/artists/${item.id}`}
                     image={resolveImageSrc({
