@@ -16,7 +16,7 @@ interface ItunesAlbum {
 export default function ImportAlbumsPage() {
   const navigate = useNavigate();
   const [err, setErr] = useState<string | null>(null);
-  const [albums] = useState<{ name: string }[]>([]);
+  const [albums] = useState<{ title: string }[]>([]);
   
   const [searchSource, setSearchSource] = useState<"itunes" | "deezer">("itunes");
   const [query, setQuery] = useState("");
@@ -77,11 +77,11 @@ export default function ImportAlbumsPage() {
     
     try {
       const toImport = results.filter(r => selectedIds.has(r.collectionId));
-      const inserts: Array<{ name: string; published: boolean }> = [];
+      const inserts: Array<{ title: string; published: boolean }> = [];
       
       for (const r of toImport) {
-        if (albums.some(a => a.name.toLowerCase() === r.collectionName.toLowerCase())) continue;
-        inserts.push({ name: r.collectionName, published: true });
+        if (albums.some(a => a.title.toLowerCase() === r.collectionName.toLowerCase())) continue;
+        inserts.push({ title: r.collectionName, published: true });
       }
       
       if (inserts.length > 0) {

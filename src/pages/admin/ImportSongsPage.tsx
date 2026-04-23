@@ -17,7 +17,7 @@ interface ItunesTrack {
 export default function ImportSongsPage() {
   const navigate = useNavigate();
   const [err, setErr] = useState<string | null>(null);
-  const [songs] = useState<{ name: string }[]>([]);
+  const [songs] = useState<{ title: string }[]>([]);
   
   const [searchSource, setSearchSource] = useState<"itunes" | "musicbrainz" | "deezer">("itunes");
   const [query, setQuery] = useState("");
@@ -92,11 +92,11 @@ export default function ImportSongsPage() {
     
     try {
       const toImport = results.filter(r => selectedIds.has(r.trackId));
-      const inserts: Array<{ name: string; published: boolean }> = [];
+      const inserts: Array<{ title: string; published: boolean }> = [];
       
       for (const r of toImport) {
-        if (songs.some(s => s.name.toLowerCase() === r.trackName.toLowerCase())) continue;
-        inserts.push({ name: r.trackName, published: true });
+        if (songs.some(s => s.title.toLowerCase() === r.trackName.toLowerCase())) continue;
+        inserts.push({ title: r.trackName, published: true });
       }
       
       if (inserts.length > 0) {
